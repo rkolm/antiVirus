@@ -12,10 +12,10 @@ public abstract class Parameter {
 	public static final boolean createNewDB = false;	
 	
 	// 1. add biometric attributes to node 2. create relations with distance
-	public static final boolean initMeetings = true;
+	public static final boolean initMeetings = false;
 	
 	// if true do Day0, fill biometric attributes e.g. inkubationPeriod randomly with content
-	public static final boolean day0 = true;
+	public static final boolean day0 = false;
 	
 	// name of the log file
 	private static String logFile = "logging.txt";  // no path allowed, no logFile if ""
