@@ -237,10 +237,13 @@ public class Neo4j {
 	/*-----------------------------------------------------------------------------
 	/*
 	/* calculate the spreading of the virus on day day
+	 * and returns the number of persons, who are in incubation period
+	 */
 	/* 
 	/*-----------------------------------------------------------------------------
 	 */
-	public void day( int day) {
+	public int day( int day) {
+		int numbPersonsInIncubation;
 		try (Transaction tx = graphDb.beginTx()) {
 			
 			// a person can infect only, if he is in the incubation period
@@ -264,9 +267,11 @@ public class Neo4j {
 			}
 			
 			this.printStatusPersons( day, tx);
+			numbPersonsInIncubation = this.getNumbPersonsInIncubation( day, tx);
 			
 			tx.commit();
 		}
+	return numbPersonsInIncubation;
 	}
 
 
@@ -331,6 +336,15 @@ public class Neo4j {
 	/*-----------------------------------------------------------------------------
 	 */
 	// download all persons
+	public HashMap<Integer, Person> getAllPersons() {
+		HashMap<Integer, Person> persons = new HashMap<Integer, Person>();
+		
+		try (Transaction tx = graphDb.beginTx()) {
+			persons = this.getAllPersons( tx);
+		}
+		return persons;
+	}
+	
 	public HashMap<Integer, Person> getAllPersons( Transaction tx) {
 		HashMap<Integer, Person> persons = new HashMap<Integer, Person>();
 		String cypherQ = Cypher.getAllPersons();

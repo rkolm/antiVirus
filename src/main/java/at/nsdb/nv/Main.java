@@ -16,9 +16,13 @@ package at.nsdb.nv;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.stream.IntStream;
 
-public class Main {
+import javax.swing.JFrame;
+
+public class Main  extends JFrame {
+	private static final long serialVersionUID = 1L;
 		
 	public static void main( final String[] args ) throws IOException
     {	
@@ -71,8 +75,14 @@ public class Main {
 		/*--------------------
 		 * calculate the spreading of the virus day by day
 		 */		
-		for( int day=2; day < 180; day++) {
-			neo4j.day( day);
+		int day = 2;
+		int numbPersonsInIncubation = 1;
+		while( day < 180 && numbPersonsInIncubation > 0) {
+			numbPersonsInIncubation = neo4j.day( day);
+			if( (day <= 90) && (Math.floorMod( day, 1) == 0)) {
+				new PanelPersons( day, neo4j.getAllPersons()).repaint();
+			}
+			day++;
 		}
 		
 		

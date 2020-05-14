@@ -14,6 +14,10 @@ import java.util.Random;
  */
 public abstract class Utils {
 	
+	
+	// to delete
+	public static String str;
+	
 
 	static Random random = new Random();
 	

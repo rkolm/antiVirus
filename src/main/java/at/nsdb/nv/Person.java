@@ -6,7 +6,7 @@ public class Person {
 	 * status of a Person. strictly order in time: healthy, inIncubation, ill, immune
 	 * healthy means never infected. After illness person becomes immune (not status healthy)
 	 */	
-	public enum status { healthy, inIncubation, ill, immune }
+	public static enum status { healthy, inIncubation, ill, immune }
 	
 		
 	

@@ -65,7 +65,7 @@ public abstract class Parameter {
 	 * is there a connection due to distance? randomly calculated
 	 */
 	public static boolean calculateRandomlyIfConnection( int distance) {
-		return Utils.randomGetDouble() < Math.min( 0.1, Math.max( 0.01, 1.0 / distance));
+		return Utils.randomGetDouble() < Math.min( 0.5, Math.max( 0.01, 0.25 / distance));
 	}
 	
 	
