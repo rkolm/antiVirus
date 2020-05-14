@@ -20,4 +20,21 @@ public class MyTimer {
 	public long elapsedTime() {
 		return ZonedDateTime.now().toInstant().toEpochMilli() - startTime;
 	}
+	
+	
+	
+	/*--------------------
+	 * delay in ms
+	 */
+	public static void delay( long ms) {
+        try {
+            Thread.sleep( ms);
+        }
+        catch(InterruptedException ex) {
+            Thread.currentThread().interrupt();
+        }
+	}
+	
+	
+
 }

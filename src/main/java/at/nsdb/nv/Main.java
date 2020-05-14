@@ -26,6 +26,10 @@ public class Main  extends JFrame {
 		
 	public static void main( final String[] args ) throws IOException
     {	
+		// for statistics
+		HashMap<Integer, StatisticADay> statistics = new HashMap<Integer, StatisticADay>();
+		
+		
 		IntStream.range( 1, 10).forEach( i -> Utils.logging( " "));
 		Utils.logging( "**** start Simulation-----------------------------------------------------");
 		Utils.logging( "logFile = " + Parameter.logFileFullFileName());
@@ -67,7 +71,7 @@ public class Main  extends JFrame {
 		 * Day 1, infect randomly 1. person
 		 */		
 		Utils.logging( "**** Day 1 ...");
-		neo4j.day1();
+		statistics.put( 1, neo4j.day1());
 		Utils.logging( "---- Day 1 finished");
 		
 		
@@ -75,15 +79,20 @@ public class Main  extends JFrame {
 		/*--------------------
 		 * calculate the spreading of the virus day by day
 		 */		
-		int day = 2;
-		int numbPersonsInIncubation = 1;
-		while( day < 180 && numbPersonsInIncubation > 0) {
-			numbPersonsInIncubation = neo4j.day( day);
-			if( (day <= 90) && (Math.floorMod( day, 1) == 0)) {
-				new PanelPersons( day, neo4j.getAllPersons()).repaint();
-			}
+		int day = 1;
+		do {
 			day++;
-		}
+			statistics.put( day, neo4j.day( day));
+			new PanelPersons( day, statistics, neo4j.getAllPersons()).repaint();
+			//MyTimer.delay( 2000);
+		} while( day < 180 && statistics.get( day).getNumbPersonsInIncubation() > 0);
+		
+		
+		
+		/*--------------------
+		 * last statistics
+		 */
+		new PanelStatistics( statistics).repaint();
 		
 		
 		

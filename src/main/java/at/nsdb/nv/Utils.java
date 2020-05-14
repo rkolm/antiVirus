@@ -13,11 +13,7 @@ import java.util.Random;
  * some utilities
  */
 public abstract class Utils {
-	
-	
-	// to delete
-	public static String str;
-	
+		
 
 	static Random random = new Random();
 	

@@ -146,22 +146,22 @@ public class Neo4j {
 			
 			try( Transaction tx = graphDb.beginTx()) {	
 				// every node (person) creates a number of relations (MEETINGs)
-				int friends = Parameter.calculateRandomlyNumbMeetings();
+				int numMeetings = Parameter.calculateRandomlyNumbMeetings();
 				do {	
 					int id2 = Utils.randomGetInt(1, numNodes);
 					lookedMeetings++;
 					if( id1 != id2) {
 						int distance = Person.distance( persons.get( id1), persons.get( id2));
-						if( Parameter.calculateRandomlyIfConnection( distance)) {
+						if( Parameter.meetingPossible( distance)) {
 							String cypherQ = Cypher.createMeeting( id1, id2, distance);
 							tx.execute( cypherQ);
 							createdMeetings++;
-							friends--;
+							numMeetings--;
 						}
 					}
-				} while( friends > 0);
+				} while( numMeetings > 0);
 				
-				if( Math.floorMod( id1, Math.min( 2500,  (int)(numNodes / 10))) == 0) {
+				if( Math.floorMod( id1, Math.min( 2500, (int)(numNodes / 10))) == 0) {
 					Utils.logging( String.format( 
 						"%7d/%d (%6.2f%%) persons, %7d meetings created, %7d lookings", 
 						id1, numNodes, 100.0 * id1 / numNodes, createdMeetings, lookedMeetings));
@@ -211,8 +211,10 @@ public class Neo4j {
 	/* 
 	/*-----------------------------------------------------------------------------
 	 */
-	public void day1( ) {
+	public StatisticADay day1( ) {
 		// if day0 not executed set all dayOfInfection to 0
+		StatisticADay statisticADay = new StatisticADay();
+		
 		if( ! Parameter.day0) {
 			String cypherQ = Cypher.setAllPersonsToHealthy();
 			try (Transaction tx = graphDb.beginTx()) {
@@ -227,8 +229,15 @@ public class Neo4j {
 			String cypherQ = Cypher.infectAPerson( id, 1);
 			tx.execute( cypherQ);
 			this.printStatusPersons( 1, tx);
+			
+			statisticADay.setNumbPersonsHealthy( this.getNumbPersonsHealthy( 1, tx));
+			statisticADay.setNumbPersonsInIncubation( this.getNumbPersonsInIncubation( 1, tx));
+			statisticADay.setNumbPersonsIll( this.getNumbPersonsIll( 1, tx));
+			statisticADay.setNumbPersonsImmune( this.getNumbPersonsImmune( 1, tx));
+			
 			tx.commit();
 		}
+		return statisticADay;
 	}
 	
 	
@@ -242,8 +251,8 @@ public class Neo4j {
 	/* 
 	/*-----------------------------------------------------------------------------
 	 */
-	public int day( int day) {
-		int numbPersonsInIncubation;
+	public StatisticADay day( int day) {
+		StatisticADay statisticADay = new StatisticADay();
 		try (Transaction tx = graphDb.beginTx()) {
 			
 			// a person can infect only, if he is in the incubation period
@@ -259,7 +268,7 @@ public class Neo4j {
 				Vector<Meeting> meetings = new Vector<Meeting>();
 				meetings = getMeetingsFromOneToHealthy( id1, tx);
 				for( Meeting meeting : meetings) {
-					if( Utils.randomGetDouble() < Math.min( 0.05, 1.0 / meeting.getDistance())) {
+					if( Parameter.infected( meeting.getDistance())) {
 						cypherQ = Cypher.infectAPerson( meeting.getId2(), day);
 						tx.execute( cypherQ);
 					}
@@ -267,11 +276,14 @@ public class Neo4j {
 			}
 			
 			this.printStatusPersons( day, tx);
-			numbPersonsInIncubation = this.getNumbPersonsInIncubation( day, tx);
+			statisticADay.setNumbPersonsHealthy( this.getNumbPersonsHealthy( day, tx));
+			statisticADay.setNumbPersonsInIncubation( this.getNumbPersonsInIncubation( day, tx));
+			statisticADay.setNumbPersonsIll( this.getNumbPersonsIll( day, tx));
+			statisticADay.setNumbPersonsImmune( this.getNumbPersonsImmune( day, tx));
 			
 			tx.commit();
 		}
-	return numbPersonsInIncubation;
+		return statisticADay;
 	}
 
 
@@ -335,7 +347,7 @@ public class Neo4j {
 	/* 
 	/*-----------------------------------------------------------------------------
 	 */
-	// download all persons
+	// download all persons 
 	public HashMap<Integer, Person> getAllPersons() {
 		HashMap<Integer, Person> persons = new HashMap<Integer, Person>();
 		
@@ -344,7 +356,6 @@ public class Neo4j {
 		}
 		return persons;
 	}
-	
 	public HashMap<Integer, Person> getAllPersons( Transaction tx) {
 		HashMap<Integer, Person> persons = new HashMap<Integer, Person>();
 		String cypherQ = Cypher.getAllPersons();

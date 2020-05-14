@@ -62,10 +62,19 @@ public abstract class Parameter {
 	
 	
 	/*--------------------
-	 * is there a connection due to distance? randomly calculated
+	 * init: is there a connection due to distance? randomly calculated
 	 */
-	public static boolean calculateRandomlyIfConnection( int distance) {
-		return Utils.randomGetDouble() < Math.min( 0.5, Math.max( 0.03, 1 / distance ));
+	public static boolean meetingPossible( int distance) {
+		return Utils.randomGetDouble() < Math.min( 0.5, Math.max( 0.02, 1 / Math.max( 1,  distance)));
+	}
+	
+	
+	
+	/*--------------------
+	 * day: probability to infect
+	 */
+	public static boolean infected( int distance) {
+		return Utils.randomGetDouble() < Math.min( 0.5, Math.max( 0.03, 1 / Math.max( 1,  distance) ));
 	}
 	
 	
