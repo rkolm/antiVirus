@@ -65,16 +65,18 @@ public abstract class Parameter {
 	 * init: is there a connection due to distance? randomly calculated
 	 */
 	public static boolean meetingPossible( int distance) {
-		return Utils.randomGetDouble() < Math.min( 0.5, Math.max( 0.02, 1 / Math.max( 1,  distance)));
+		return Utils.randomGetDouble() < Math.min( 0.5, Math.max( 0.001, 1 / Math.max( 1,  distance*distance)));
 	}
 	
 	
 	
 	/*--------------------
-	 * day: probability to infect
+	 * day: probability to infect, depending on distance
 	 */
 	public static boolean infected( int distance) {
-		return Utils.randomGetDouble() < Math.min( 0.5, Math.max( 0.03, 1 / Math.max( 1,  distance) ));
+		boolean infected = Utils.randomGetDouble() < Math.min( 0.25, Math.max( 0.01, 1 / Math.max( 1,  distance)));
+		//if( infected) Utils.logging( "infected: " + distance);
+		return infected;
 	}
 	
 	

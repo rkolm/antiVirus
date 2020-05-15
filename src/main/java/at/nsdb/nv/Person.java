@@ -43,7 +43,7 @@ public class Person {
 	 * 1 degree = 60 nm, 1 nm = 1,852 km
 	 */	
 	public static int distance( Person p1, Person p2) {
-		return (int) (Math.sqrt( 
+		return (int) ( Math.sqrt( 
 			Math.pow( p1.longitude - p2.longitude, 2)  +
 			Math.pow( p1.latitude - p2.latitude, 2)) / 60 * 1.852);
 	}
