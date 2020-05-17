@@ -261,12 +261,14 @@ public class Neo4j {
 			Result result = tx.execute( cypherQ);
 			
 			while( result.hasNext()) {
+				
 				Map<String, Object> row = result.next();
 				Node node = (Node) row.get("p");
-				int id1 = ((int)(long) node.getProperty( Neo4j.fieldName.id.toString()));
+				
+				int id = ((int)(long) node.getProperty( Neo4j.fieldName.id.toString()));
 				
 				Vector<Meeting> meetings = new Vector<Meeting>();
-				meetings = getMeetingsFromOneToHealthy( id1, tx);
+				meetings = getAllMeetingsFromAPersonToHealthy( id, tx);
 				for( Meeting meeting : meetings) {
 					if( Parameter.infected( meeting.getDistance())) {
 						cypherQ = Cypher.infectAPerson( meeting.getId2(), day);
@@ -412,7 +414,7 @@ public class Neo4j {
 	}
 	
 	// download all meetings from 1 person to all connected healthy persons
-	public Vector<Meeting> getMeetingsFromOneToHealthy( int id, Transaction tx) {
+	public Vector<Meeting> getAllMeetingsFromAPersonToHealthy( int id, Transaction tx) {
 		String cypherQ = Cypher.getAllMeetingsFromAPersonToHealthy( id);
 		Result result = tx.execute( cypherQ);
 		return getMeetingsFromResult( result);
