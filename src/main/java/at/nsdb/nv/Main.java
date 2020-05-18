@@ -14,7 +14,6 @@
 
 package at.nsdb.nv;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.stream.IntStream;
@@ -39,8 +38,12 @@ public class Main  extends JFrame {
 		 */
 		Utils.logging( String.format( "**** %sopening DB ...", Parameter.createNewDB ? "creating & " : ""));
 		Utils.logging( String.format( "database directory = %s", Parameter.neo4jFullFileName()));
-		Neo4j neo4j = new Neo4j( new File( Parameter.neo4jFullFileName()), Parameter.createNewDB);
+		//Neo4j neo4j = new Neo4j( new File( Parameter.neo4jFullFileName()), Parameter.createNewDB);
+		Neo4j neo4j = new Neo4j(Parameter.createNewDB);
 		Utils.logging( String.format( "---- %sopening DB finished", Parameter.createNewDB ? "creating & " : ""));
+		if (Parameter.createNewDB) {
+			return;
+		}
 
 	
 		
@@ -83,7 +86,7 @@ public class Main  extends JFrame {
 		do {
 			day++;
 			statistics.put( day, neo4j.day( day));
-			new PanelPersons( day, statistics, neo4j.getAllPersons()).repaint();
+			new PanelPersons( day, statistics, neo4j.getAllPersonsMap()).repaint();
 			//MyTimer.delay( 2000);
 		} while( day < 180 && statistics.get( day).getNumbPersonsInIncubation() > 0);
 		
@@ -104,12 +107,5 @@ public class Main  extends JFrame {
 		Utils.logging( "---- printing db status/content finished");
         
 		
-		
-		/*--------------------
-		 * shut down
-		 */
-        Utils.logging( "**** shut down db ...");
-        neo4j.shutDown();
-        Utils.logging( "---- shut down db finished");
     }
 }

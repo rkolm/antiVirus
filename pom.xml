@@ -1,10 +1,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>at.nsdb.nv</groupId>
-	<artifactId>personsInTheMiddle</artifactId>
+	<artifactId>antiVirus</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>HelloWorldNeo4j</name>
-	<description>test-proj</description>
+	<name>VirusSimulationNeo4j</name>
+	<description>
+		PS-Projekt PS NSDB
+		Simulation Virus-Ausbreitung
+		Datenbasis sind Adressinformation in einer Neo4j-Datenbank	
+	</description>
 
 	<properties>
 		<maven.compiler.source>11</maven.compiler.source>
@@ -16,7 +20,7 @@
 		<dependency>
         	<groupId>org.neo4j.driver</groupId>
         	<artifactId>neo4j-java-driver</artifactId>
-        	<version>4.0.0</version>
+        	<version>4.0.1</version>
     	</dependency>
     	<!-- -->
 	
@@ -26,13 +30,13 @@
 			<version>4.0.3</version>
 		</dependency>
 		
-		<!-- -->
+		<!--
 		<dependency>
 			<groupId>org.neo4j</groupId>
 			<artifactId>neo4j-kernel</artifactId>
 			<version>4.0.3</version>
 		</dependency>
-		<!-- -->
+		-->
 		
 		<!-- https://mvnrepository.com/artifact/org.neo4j/neo4j-graph-algo -->
 		<!-- -->
