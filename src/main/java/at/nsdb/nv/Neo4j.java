@@ -216,20 +216,22 @@ public class Neo4j {
 		StatisticADay statisticADay = new StatisticADay();
 		try (Session session = driver.session()) {
 			session.writeTransaction(tx -> {
-
+			
 				// a person can infect only, if he is in the incubation period
 				// select all persons, who can infect another person i.e. is in incubation period
-				Result result = tx.run( Cypher.getAllPersonsInIncubation( day));
+				String cypherQ = Cypher.getAllPersonsInIncubation( day);
+				Result result = tx.run( cypherQ);
 				
-				while( result.hasNext()) {
+				while( result.hasNext()) {					
 					Value node = result.next().get("p");
 					int id1 = node.get(Neo4j.fieldName.id.toString()).asInt();
 					
 					Vector<Meeting> meetings = new Vector<Meeting>();
-					meetings = getMeetingsFromOneToHealthy( id1, tx);
+					meetings = getAllMeetingsFromAPersonToHealthy( id1, tx);
 					for( Meeting meeting : meetings) {
 						if( Parameter.infected( meeting.getDistance())) {
-							tx.run( Cypher.infectAPerson( meeting.getId2(), day));
+							cypherQ = Cypher.infectAPerson( meeting.getId2(), day);
+							tx.run( cypherQ);
 						}
 					}
 				}
@@ -367,8 +369,9 @@ public class Neo4j {
 	}
 	
 	// download all meetings from 1 person to all connected healthy persons
-	public Vector<Meeting> getMeetingsFromOneToHealthy( int id, Transaction tx) {
-		Result result = tx.run( Cypher.getAllMeetingsFromAPersonToHealthy( id));
+	public Vector<Meeting> getAllMeetingsFromAPersonToHealthy( int id, Transaction tx) {
+		String cypherQ = Cypher.getAllMeetingsFromAPersonToHealthy( id);
+		Result result = tx.run( cypherQ);
 		return getMeetingsFromResult( result);
 	}
 	
