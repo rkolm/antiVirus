@@ -28,22 +28,16 @@ public class Main  extends JFrame {
 		// for statistics
 		HashMap<Integer, StatisticADay> statistics = new HashMap<Integer, StatisticADay>();
 		
-		
 		IntStream.range( 1, 10).forEach( i -> Utils.logging( " "));
 		Utils.logging( "**** start Simulation-----------------------------------------------------");
 		Utils.logging( "logFile = " + Parameter.logFileFullFileName());
 		
+		
+		
 		/*--------------------
-		 * create empty neo4j database
+		 * connect to DB
 		 */
-		Utils.logging( String.format( "**** %sopening DB ...", Parameter.createNewDB ? "creating & " : ""));
-		Utils.logging( String.format( "database directory = %s", Parameter.neo4jFullFileName()));
-		//Neo4j neo4j = new Neo4j( new File( Parameter.neo4jFullFileName()), Parameter.createNewDB);
-		Neo4j neo4j = new Neo4j(Parameter.createNewDB);
-		Utils.logging( String.format( "---- %sopening DB finished", Parameter.createNewDB ? "creating & " : ""));
-		if (Parameter.createNewDB) {
-			return;
-		}
+		Neo4j neo4j = new Neo4j();
 
 	
 		
@@ -51,23 +45,12 @@ public class Main  extends JFrame {
 		 * initializing database, optional, if neo4j structure is up to date
 		 * 1. add biometric attributes to node 2. create relations with distance
 		 */
-		if( Parameter.initMeetings) {
+		if( Parameter.initialize) {
 			Utils.logging( "**** initialization ...");
-			neo4j.initMeetings();
+			neo4j.initialize();
 			Utils.logging( "---- initialization finished");
 		}
 
-		
-		
-		/*--------------------
-		 * do Day0, optional if biometrics attributes already set
-		 */		
-		if( Parameter.day0) {
-			Utils.logging( "**** Day 0 ...");
-			neo4j.day0();
-			Utils.logging( "---- Day 0 finished");
-		}
-		
 		
 		
 		/*--------------------
@@ -86,7 +69,7 @@ public class Main  extends JFrame {
 		do {
 			day++;
 			statistics.put( day, neo4j.day( day));
-			new PanelPersons( day, statistics, neo4j.getAllPersonsMap()).repaint();
+			new PanelPersons( day, statistics, neo4j.getAllPersons()).repaint();
 			//MyTimer.delay( 2000);
 		} while( day < 180 && statistics.get( day).getNumbPersonsInIncubation() > 0);
 		
@@ -105,7 +88,5 @@ public class Main  extends JFrame {
         Utils.logging( "**** printing db status/content ...");
 		neo4j.printNeo4jContent();
 		Utils.logging( "---- printing db status/content finished");
-        
-		
     }
 }

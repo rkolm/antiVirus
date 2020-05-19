@@ -36,9 +36,10 @@ public class Cypher {
 	// create biometrics attributes
 	public static String addBiometricsAttributes() {
 		String cypherQ = String.format( 
-			"Match( p:Person) " +
+			"Match( p:%s) " +
 			"Set p.%s = 0, p.%s = 0, p.%s = 0",
-			Neo4j.fieldName.illnessPeriod, Neo4j.fieldName.incubationPeriod, Neo4j.fieldName.dayOfInfection);
+			Neo4j.labelName.Person, Neo4j.fieldName.illnessPeriod, Neo4j.fieldName.incubationPeriod,
+			Neo4j.fieldName.dayOfInfection);
 		return cypherQ;
 	}
 	
@@ -90,15 +91,6 @@ public class Cypher {
 		return cypherQ;
 	}
 	
-	// download a person 
-	public static String getAPerson( int id) {
-		String cypherQ = String.format(
-			"MATCH (p:%s {id:%d}) "+
-			"RETURN p",
-			Neo4j.labelName.Person, id);
-		return cypherQ;
-	}
-	
 	// download all persons in incubation period. only persons in incubation period can infect
 	public static String getAllPersonsInIncubation( int day) {
 		String cypherQ = String.format(	
@@ -116,6 +108,34 @@ public class Cypher {
 	
 	/*-----------------------------------------------------------------------------
 	/*
+	/* labels :Person
+	/* 
+	/*-----------------------------------------------------------------------------
+	 */	
+	// w�hle 5.000 Knoten zuf�llig aus und setze label :Person
+	public static String selectPersons( int numbNodes) {
+		String cypherQ = String.format(
+				"MATCH (n) " +
+				"WHERE rand() < %s " +
+				"SET n:%s", 
+				String.valueOf( (double) Parameter.numPersonsSelected / numbNodes), Neo4j.labelName.Person);
+		return cypherQ;
+	}
+	
+	// l�sche alle labels :Person
+	public static String removeAllLabelsPerson() {
+		String cypherQ = String.format(
+				"MATCH (p:%s) " +
+				"REMOVE p:%s", 
+				Neo4j.labelName.Person, Neo4j.labelName.Person);
+		return cypherQ;
+	}
+	
+	
+	
+	
+	/*-----------------------------------------------------------------------------
+	/*
 	/* download MEETING (relation)
 	/* 
 	/*-----------------------------------------------------------------------------
@@ -125,23 +145,24 @@ public class Cypher {
 		String cypherQ = String.format(
 			"MATCH (p:%s)-[c:%s]->(q) " +
 			"RETURN p, c, q", 
-			Neo4j.labelName.Person, Neo4j.relType.meeting);
+			Neo4j.labelName.Person, Neo4j.relType.Meeting);
 		return cypherQ;
 	}
 	
-	// download all relations (meetings) from 1 person, only to healthy persons 
-	public static String getAllMeetingsFromAPersonToHealthy( int id) {
+	// get id2 and distance from all persons who can be infected
+	public static String getAllPersonsWhoCanBeInfected( int day) {
 		String cypherQ = String.format(
-			"MATCH (p:%s {id:%s})-[c:%s]->(q:%s) " +
-			"WHERE q.%s = 0 " +
-			"RETURN p, c, q", 
-			Neo4j.labelName.Person, id, Neo4j.relType.meeting, 
-			Neo4j.labelName.Person, Neo4j.fieldName.dayOfInfection);
+				"MATCH (p:%s)-[c:%s]->(q:%s) " +
+				"WHERE (q.%s = 0) AND (p.%s > 0) AND (p.%s <= %d) AND (%d <= p.%s + p.%s) " +
+				"RETURN q.%s as id2, c.%s as distance",
+				Neo4j.labelName.Person, Neo4j.relType.Meeting, Neo4j.labelName.Person, 
+				Neo4j.fieldName.dayOfInfection, 
+				Neo4j.fieldName.dayOfInfection, Neo4j.fieldName.dayOfInfection, day,
+				day, Neo4j.fieldName.dayOfInfection, Neo4j.fieldName.incubationPeriod,
+				Neo4j.fieldName.id, Neo4j.fieldName.distance);
 		return cypherQ;
 	}
-	
-	
-	
+		
 	
 	
 	
@@ -152,18 +173,19 @@ public class Cypher {
 	/*-----------------------------------------------------------------------------
 	 */	
 	// delete all relations in neo4j
-	public static String deleteAllRelations() {
-		String cypherQ = "Match ()-[m]->() delete m";
+	public static String deleteAllRelationsBetweenPersons() {
+		String cypherQ = String.format( "Match (p:%s)-[m]->(q:%s) delete m",
+			Neo4j.labelName.Person, Neo4j.labelName.Person);
 		return cypherQ;
 	}
 	
-	// create a MEETING- relation between 2 persons
+	// create a Meeting- relation between 2 persons
 	public static String createMeeting( int id1, int id2, int distance) {
 		String cypherQ = String.format(
 				"MATCH (p:%s {id: %d}), (q:%s {id: %d}) " +
 				"CREATE (p)-[:%s {distance:%d}]->(q)", 
 				Neo4j.labelName.Person, id1, Neo4j.labelName.Person, id2,
-				Neo4j.relType.meeting, distance);
+				Neo4j.relType.Meeting, distance);
 		return cypherQ;
 	}
 		
@@ -182,6 +204,14 @@ public class Cypher {
 			"MATCH (n:%s) " +
 			"RETURN count(n) as count", 
 			Neo4j.labelName.Person);
+		return cypherQ;
+	}
+	
+	// number of nodes over all in neo4J
+	public static String numbNodes() {
+		String cypherQ = 
+			"MATCH (n) " +
+			"RETURN count(n) as count";
 		return cypherQ;
 	}
 	
@@ -235,7 +265,7 @@ public class Cypher {
 		String cypherQ = String.format( 
 			"MATCH (:%s)-[r:%s]->(:%s) " +
 			"RETURN count(r) as count",
-			Neo4j.labelName.Person, Neo4j.relType.meeting, Neo4j.labelName.Person);
+			Neo4j.labelName.Person, Neo4j.relType.Meeting, Neo4j.labelName.Person);
 		return cypherQ;
 	}
 }

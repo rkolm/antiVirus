@@ -3,32 +3,27 @@ package at.nsdb.nv;
 public abstract class Parameter {
 	
 	/*--------------------
-	 * location/name of the neo4J database (will be crated if createNewND = true
-	 * relative to <projectdirectory>
+	 * VersionsNr
 	 */
-	private static final String relDBPath = "DBs\\antiVirus";
+	public static final String versionNr = "v1.1";
 	
-	// if true, old database will be destroyed, a new one will be created
-	public static final boolean createNewDB = false;	
+	// number of selected persons
+	public static final int numPersonsSelected = 5000;
+		
 	
-	// 1. add biometric attributes to node 2. create relations with distance
-	public static final boolean initMeetings = false;
-	
-	// if true do Day0, fill biometric attributes e.g. inkubationPeriod randomly with content
-	public static final boolean day0 = false;
+	// 1. add biometric attributes to node 
+	// 2. create relations with distance
+	public static final boolean initialize = true;
+
 	
 	// name of the log file
-	private static String logFile = "logging.txt";  // no path allowed, no logFile if ""
+	private static String logFile = "logging.txt"; 
 	
 
 	
 	/*--------------------
 	 * get the full path/filename on relative directory
 	 */
-	public static String neo4jFullFileName() {
-		String projectDirectory = System.getProperty("user.dir");
-		return projectDirectory.substring( 0, projectDirectory.lastIndexOf( "\\") + 1) + relDBPath;
-	}
 	public static String logFileFullFileName() {
 		if( logFile == "") return "";
 		else {
@@ -65,7 +60,8 @@ public abstract class Parameter {
 	 * init: is there a connection due to distance? randomly calculated
 	 */
 	public static boolean meetingPossible( int distance) {
-		return Utils.randomGetDouble() < Math.min( 0.5, Math.max( 0.001, 1 / Math.max( 1,  distance*distance)));
+		return Utils.randomGetDouble() < 
+			Math.min( 0.5, Math.max( 0.001, 1 / Math.max( 1,  Math.pow( distance/1000.0, 2))));
 	}
 	
 	
@@ -74,8 +70,8 @@ public abstract class Parameter {
 	 * day: probability to infect, depending on distance
 	 */
 	public static boolean infected( int distance) {
-		boolean infected = Utils.randomGetDouble() < Math.min( 0.25, Math.max( 0.01, 1 / Math.max( 1,  distance)));
-		//if( infected) Utils.logging( "infected: " + distance);
+		boolean infected = Utils.randomGetDouble() < 
+			Math.min( 0.25, Math.max( 0.01, 1 / Math.max( 1,  distance/1000.0)));
 		return infected;
 	}
 	
