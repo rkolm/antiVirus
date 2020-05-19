@@ -59,8 +59,8 @@ public class Neo4j {
 	public Neo4j() {
 		this.driver = GraphDatabase.driver( "bolt://localhost:7687", AuthTokens.basic( "neo4j",  "nsdb"));
 		this.driver.verifyConnectivity();
-		setConstraintsIndexes();
 		Utils.logging( "DB is connected");
+		setConstraintsIndexes();		
 	}
 	
 	
@@ -436,7 +436,7 @@ public class Neo4j {
 	 */
 	private void setConstraintsIndexes() {
 		setConstraint();
-		//setIndexForPerson( );
+		setIndexForPerson( );
 	}
 	private void setConstraint() {
 		String cypherQ = Cypher.createConstraint();
@@ -448,12 +448,20 @@ public class Neo4j {
 			Utils.logging( "Constraint :Person( id) already exists");
 		}
 	}
-	
-	/* ToDo
-	private void setIndexForPerson( ) {
-		//IndexDefinition usernamesIndex;
-		
-		// index f�r label Person
+	private void setIndexForPerson( ) {				
+		// index for attribute dayOfInfection and incubationPeriod
+		for( String attributeName : new String[] {Neo4j.fieldName.dayOfInfection.toString(),
+			Neo4j.fieldName.incubationPeriod.toString()}) {
+				try (Session session = driver.session()) {
+					session.run(Cypher.createIndex(attributeName));
+					Utils.logging( "Index Person." + attributeName + " created");
+				} catch(Exception e) {
+					Utils.logging( "Index Person." + attributeName + " already exists");
+				}
+		}
+
+		// index for label Person
+		/*
         try ( Transaction tx = graphDb.beginTx() ) {
             Schema schema = tx.schema();
             schema.indexFor( Label.label( Neo4j.labelName.Person.toString()) )
@@ -465,8 +473,9 @@ public class Neo4j {
 		} catch( Exception e) {
 			Utils.logging( "Index Person." + Neo4j.labelName.Person.toString() + " already exists");
 		}
-        
-        // index f�r attribute dayOfInfection and incubationPeriod
+		
+
+        // index for attribute dayOfInfection and incubationPeriod
         //String attributeName = Neo4j.fieldName.dayOfInfection.toString();
         for( String attributeName : new String[] {Neo4j.fieldName.dayOfInfection.toString(),
         		Neo4j.fieldName.incubationPeriod.toString()}) {
@@ -482,7 +491,10 @@ public class Neo4j {
     		} catch( Exception e) {
     			Utils.logging( "Index Person." + attributeName + " already exists");
     		}
-        }
+		}
+		*/
 	}
-	*/
+	
+
+
 }
