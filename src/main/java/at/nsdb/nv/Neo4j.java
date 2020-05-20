@@ -57,7 +57,8 @@ public class Neo4j {
 	/*-----------------------------------------------------------------------------
 	 */
 	public Neo4j() {
-		this.driver = GraphDatabase.driver( "bolt://localhost:7687", AuthTokens.basic( "neo4j",  "nsdb"));
+		this.driver = GraphDatabase.driver( Config.getDbUri(), 
+						AuthTokens.basic( Config.getDbUser(), Config.getDbPassword()));
 		this.driver.verifyConnectivity();
 		Utils.logging( "DB is connected");
 		setConstraintsIndexes();		

@@ -31,7 +31,7 @@ public class Main  extends JFrame {
 		IntStream.range( 1, 10).forEach( i -> Utils.logging( " "));
 		Utils.logging( "**** start Simulation-----------------------------------------------------");
 		Utils.logging( "logFile = " + Parameter.logFileFullFileName());
-		
+		Config.printAll();		
 		
 		
 		/*--------------------
@@ -89,4 +89,5 @@ public class Main  extends JFrame {
 		neo4j.printNeo4jContent();
 		Utils.logging( "---- printing db status/content finished");
     }
+
 }
