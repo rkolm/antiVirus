@@ -5,7 +5,8 @@ package at.nsdb.nv;
  * connection (in neo4j relationship) between 2 persons
  */
 public class Meeting {
-	private int id1, id2, distance;
+	private int id1, id2;
+	int distance;
 	
 	
 	

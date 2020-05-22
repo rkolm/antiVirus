@@ -16,6 +16,7 @@ public abstract class Utils {
 		
 
 	static Random random = new Random();
+	public static MyTimer mainTimer = new MyTimer();
 	
 	/*--------------------
 	 * randomGetInt( 10, 12) means randomly 10, 11 or 12
@@ -50,8 +51,9 @@ public abstract class Utils {
 	 * logging in console and log- file
 	 */
 	public static void logging( Object o) {
-	    DateFormat formatter = new SimpleDateFormat( "dd.MM. HH:mm:ss");
-	    String s = String.format( "%s:, %s", formatter.format(new Date()), o.toString());
+	    DateFormat formatter = new SimpleDateFormat( "dd.MM.,HH:mm:ss");
+	    String s = String.format( "%s,%s, %.3f,ms, %s,", 
+	    	Parameter.versionNr, formatter.format(new Date()), mainTimer.elapsedTime()/1000.0, o.toString());
 	    if( o.toString().startsWith( "****")) s = "\n" + s;
 	    System.out.println( s);
 	    

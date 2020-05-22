@@ -5,10 +5,7 @@ public abstract class Parameter {
 	/*--------------------
 	 * VersionsNr
 	 */
-	public static final String versionNr = "v1.1";
-	
-	// number of selected persons
-	public static final int numPersonsSelected = 5000;
+	public static final String versionNr = "v1.2";
 		
 	
 	// 1. add biometric attributes to node 
@@ -63,18 +60,5 @@ public abstract class Parameter {
 		return Utils.randomGetDouble() < 
 			Math.min( 0.5, Math.max( 0.001, 1 / Math.max( 1,  Math.pow( distance/1000.0, 2))));
 	}
-	
-	
-	
-	/*--------------------
-	 * day: probability to infect, depending on distance
-	 */
-	public static boolean infected( int distance) {
-		boolean infected = Utils.randomGetDouble() < 
-			Math.min( 0.25, Math.max( 0.01, 1 / Math.max( 1,  distance/1000.0)));
-		return infected;
-	}
-	
-	
 
 }

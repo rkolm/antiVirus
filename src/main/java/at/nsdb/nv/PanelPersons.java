@@ -11,8 +11,11 @@ import javax.swing.JPanel;
 
 public class PanelPersons extends JFrame {
 	private static final long serialVersionUID = 1L;
+	
+	// max/min lokations (longitude, latitude) of persons
+	int minLong=Integer.MAX_VALUE, maxLong=0, minLat=Integer.MAX_VALUE, maxLat=0;
 
-	public PanelPersons( int day, HashMap<Integer, StatisticADay> statistics, HashMap<Integer, Person> persons) {
+	public PanelPersons( int day, HashMap<Integer, StatisticADay> statistics, Persons persons) {
 		StatisticADay statisticADay = new StatisticADay();
 		statisticADay = statistics.get( day);
 		
@@ -27,18 +30,7 @@ public class PanelPersons extends JFrame {
 		setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE);
 		this.setBackground( Color.white);
 		this.setVisible( true);
-		this.repaint();
-		
-		// max/min lokations (longitude, latitude) of persons
-		int minLong=Integer.MAX_VALUE, maxLong=0, minLat=Integer.MAX_VALUE, maxLat=0;
-		for( int id: persons.keySet()) {
-			Person p = persons.get( id);
-			minLong = Math.min( minLong, p.getLongitude());
-			maxLong = Math.max( maxLong, p.getLongitude());
-			minLat = Math.min( minLat, p.getLatitude());
-			maxLat = Math.max( maxLat, p.getLatitude());			
-		};
-		
+		this.repaint();		
 		
 		JPanel jpanel = new JPanel() {
 			private static final long serialVersionUID = 1L;
@@ -48,17 +40,19 @@ public class PanelPersons extends JFrame {
 				Graphics2D g2 = (Graphics2D) g;
 				this.setBackground( Color.white);
 				
-				for( int id: persons.keySet()) {
-					Person p = persons.get( id);
-					
+				for( Person p : persons.getAllPersons()) {					
 					g2.setColor(Color.white);
 					if( p.getStatus( day) == Person.status.healthy) g2.setColor(Color.yellow);
 					if( p.getStatus( day) == Person.status.inIncubation) g2.setColor(Color.red);
 					if( p.getStatus( day) == Person.status.ill) g2.setColor(Color.black);
 					if( p.getStatus( day) == Person.status.immune) g2.setColor(Color.green);
 					
-					g2.drawRect( (p.getLongitude()-46800+1) / 10, 
-						(p.getLatitude()-169200+1) / 10, 1, 1);
+					int w = (int) ((double)(p.getLongitude()-persons.getMinLongitude()) / 
+						(persons.getMaxLongitude()-persons.getMinLongitude()) * (panelWidth-2) + 1.0);
+					int h = (int) ((double)(p.getLatitude()-persons.getMinLatitude()) / 
+						(persons.getMaxLatitude()-persons.getMinLatitude()) * (panelHeight-2) + 1.0);
+					g2.drawRect( w, h, 1, 1);
+					//Utils.logging( String.format( "l=%d h=%d", w, h));
 				};
 			}
 		};
