@@ -56,10 +56,11 @@ public class Neo4j {
 	/*-----------------------------------------------------------------------------
 	 */
 	public Neo4j() {
-		this.driver = GraphDatabase.driver( "bolt://localhost:7687", AuthTokens.basic( "neo4j",  "nsdb"));
+		this.driver = GraphDatabase.driver( Config.getDbUri(), 
+							AuthTokens.basic( Config.getDbUser(),  Config.getDbPassword()));
 		this.driver.verifyConnectivity();
 		setConstraintsIndexes();
-		Utils.logging( "DB is connected");
+		Utils.logging( "DB" + Config.getDbUri() + "is connected");
 	}
 	
 	
@@ -442,7 +443,7 @@ public class Neo4j {
 	private void setIndexForPerson( ) {
 		//IndexDefinition usernamesIndex;
 		
-		// index für label Person
+		// index fï¿½r label Person
         try ( Transaction tx = graphDb.beginTx() ) {
             Schema schema = tx.schema();
             schema.indexFor( Label.label( Neo4j.labelName.Person.toString()) )
@@ -455,7 +456,7 @@ public class Neo4j {
 			Utils.logging( "Index Person." + Neo4j.labelName.Person.toString() + " already exists");
 		}
         
-        // index für attribute dayOfInfection and incubationPeriod
+        // index fï¿½r attribute dayOfInfection and incubationPeriod
         //String attributeName = Neo4j.fieldName.dayOfInfection.toString();
         for( String attributeName : new String[] {Neo4j.fieldName.dayOfInfection.toString(),
         		Neo4j.fieldName.incubationPeriod.toString()}) {
