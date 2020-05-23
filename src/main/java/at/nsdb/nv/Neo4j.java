@@ -9,34 +9,36 @@ import org.neo4j.driver.Record;
 import org.neo4j.driver.Result;
 import org.neo4j.driver.Session;
 import org.neo4j.driver.Transaction;
+import static org.neo4j.driver.Values.parameters;
 import org.neo4j.driver.types.Node;
 import org.neo4j.driver.types.Relationship;
 
-
 public class Neo4j {
-	
+
 	private int createdMeetings = 0;
 	private int lookedMeetings = 0;
 	private int nodesDone = 0;
 	private Persons persons;
-	
-	
+
 	/*-----------------------------------------------------------------------------
 	/*
 	/* fieldnames of the database
 	/* 
 	/*-----------------------------------------------------------------------------
 	 */
-	public static enum labelName { Person }
-	public static enum relType { Meeting }
-	public static enum fieldName { id,
-		age, firstName,
-		longitude, latitude, distance,
-		dayOfInfection, incubationPeriod, illnessPeriod }
-	
+	public static enum labelName {
+		Person
+	}
 
-	
-	/*.2.*/
+	public static enum relType {
+		Meeting
+	}
+
+	public static enum fieldName {
+		id, age, firstName, longitude, latitude, distance, dayOfInfection, incubationPeriod, illnessPeriod
+	}
+
+	/* .2. */
 	/*-----------------------------------------------------------------------------
 	/*
 	/* variables to manage the database
@@ -44,11 +46,8 @@ public class Neo4j {
 	/*-----------------------------------------------------------------------------
 	 */
 	private Driver driver;
-	/*.2.*/
-	
-	
-	
-	
+	/* .2. */
+
 	/*-----------------------------------------------------------------------------
 	/*
 	/* constructor, connect to database
@@ -56,16 +55,13 @@ public class Neo4j {
 	/*-----------------------------------------------------------------------------
 	 */
 	public Neo4j() {
-		this.driver = GraphDatabase.driver( Config.getDbUri(), 
-							AuthTokens.basic( Config.getDbUser(),  Config.getDbPassword()));
+		this.driver = GraphDatabase.driver(Config.getDbUri(),
+				AuthTokens.basic(Config.getDbUser(), Config.getDbPassword()));
 		this.driver.verifyConnectivity();
 		setConstraintsIndexes();
-		Utils.logging( "DB" + Config.getDbUri() + "is connected");
+		Utils.logging("DB" + Config.getDbUri() + "is connected");
 	}
-	
-	
-	
-	
+
 	/*-----------------------------------------------------------------------------
 	/*
 	/* initializing database, optional (see class Parameter), if neo4j structure is up to date
@@ -73,79 +69,87 @@ public class Neo4j {
 	/* 
 	/*-----------------------------------------------------------------------------
 	 */
-	public void initialize() {		
+	public void initialize() {
 		// define constraints and indexes
-		Utils.logging( "checking constraints & indexes");
+		Utils.logging("checking constraints & indexes");
 		setConstraintsIndexes();
-		
-		try( Session session = driver.session()) {		
+
+		try (Session session = driver.session()) {
 			session.writeTransaction(tx -> {
-						
-				tx.run( Cypher.removeAllRelationsMeeting());
-				Utils.logging( "all relations :Meeting deleted");
-					
-				tx.run( Cypher.removeBiometricsAttributesFromAllPersons());
-				Utils.logging( "all biomeric attributes deleted");	
-						
-				tx.run( Cypher.addBiometricsAttributesToPersons());	
-				Utils.logging( "biometric attributes e.g. incubation period to :person added");
+
+				tx.run(Cypher.removeAllRelationsMeeting());
+				Utils.logging("all relations :Meeting deleted");
+
+				tx.run(Cypher.removeBiometricsAttributesFromAllPersons());
+				Utils.logging("all biomeric attributes deleted");
+
+				tx.run(Cypher.addBiometricsAttributesToPersons());
+				Utils.logging("biometric attributes e.g. incubation period to :person added");
 				return 1;
 			});
 		}
-		
-		persons = new Persons( downloadAllPersons());
+
+		persons = new Persons(downloadAllPersons());
 		// set content to biometric attributes
-		Utils.logging( "set biometrics attributes for all persons ...");
-		try(Session session = driver.session()) {		
-			session.writeTransaction( tx -> {		
+		Utils.logging("set biometrics attributes for all persons ...");
+		try (Session session = driver.session()) {
+			session.writeTransaction(tx -> {
 				// set biometrics and upload to neo4j
 				// how to iterate a HashMap easily?
-				for( Person p : persons.getAllPersons()) {
+				for (Person p : persons.getAllPersons()) {
 					p.setBiometrics();
-					String cypherQ = Cypher.setBiometrics( p.getId(), p.getIncubationPeriod(), p.getIllnessPeriod());
-					tx.run( cypherQ);
+					//String cypherQ = Cypher.setBiometrics(p.getId(), p.getIncubationPeriod(), p.getIllnessPeriod());					
+					tx.run("MATCH (n:" + Neo4j.labelName.Person + ") " +
+						   "WHERE (n." + Neo4j.fieldName.id + "= $id) " +
+							 "SET n." + Neo4j.fieldName.dayOfInfection + "= 0," +
+							 	" n." + Neo4j.fieldName.incubationPeriod + "= $incubationPeriod," +
+								" n." + Neo4j.fieldName.illnessPeriod + "= $illnessPeriod",
+							parameters("id", p.getId(), 
+									   "incubationPeriod", p.getIncubationPeriod(), 
+									   "illnessPeriod", p.getIllnessPeriod()));							   
 				}
 				return 1;
 			});
 		}
-		Utils.logging( "biometrics attributes for all persons set");
-		persons = new Persons( downloadAllPersons());	
-		
-		Utils.logging( String.format( "creating meetings into database for %d persons ...",	persons.getNumberPersons()));	
-		
+		Utils.logging("biometrics attributes for all persons set");
+		persons = new Persons(downloadAllPersons());
+
+		Utils.logging(String.format("creating meetings into database for %d persons ...", persons.getNumberPersons()));
+
 		// works, but very slowly
-//		try( Session session = driver.session()) {		
-//			session.writeTransaction( tx -> {		
-//				String cypherQ = 
-//					"MATCH (p:Person), (q:Person) " + 
-//					"WHERE p.id <> q.id " + 
-//					"WITH p, q, rand() as r, round( distance( " +
-//						"point( {x:p.longitude, y:p.latitude, crs:'cartesian'}), " +
-//						"point( {x:q.longitude, y:q.latitude, crs:'cartesian'}))) AS dist " + 
-//					"WHERE r < 0.1 and (r < 2/dist or r < 0.0002) " + 
-//					"CREATE (p)-[m:Meeting {distance:dist}]->(q)";
-//				tx.run( cypherQ);
-//				return 1;
-//			});
-//		}
-		
-		
-		
+		// try( Session session = driver.session()) {
+		// session.writeTransaction( tx -> {
+		// String cypherQ =
+		// "MATCH (p:Person), (q:Person) " +
+		// "WHERE p.id <> q.id " +
+		// "WITH p, q, rand() as r, round( distance( " +
+		// "point( {x:p.longitude, y:p.latitude, crs:'cartesian'}), " +
+		// "point( {x:q.longitude, y:q.latitude, crs:'cartesian'}))) AS dist " +
+		// "WHERE r < 0.1 and (r < 2/dist or r < 0.0002) " +
+		// "CREATE (p)-[m:Meeting {distance:dist}]->(q)";
+		// tx.run( cypherQ);
+		// return 1;
+		// });
+		// }
+
 		// create new relations between persons
-		for( Person p : persons.getAllPersons()) {
+		for (Person p : persons.getAllPersons()) {
 			int id1 = p.getId();
-			try( Session session = driver.session()) {
-				session.readTransaction( tx -> {
+			try (Session session = driver.session()) {
+				session.readTransaction(tx -> {
 					// every node (person) creates a number of relations (MEETINGs)
 					int numbMeetings = Parameter.calculateRandomlyNumbMeetings();
-					do {	
+					do {
 						int id2 = persons.getPersonRandomly().getId();
 						lookedMeetings++;
-						if( id1 != id2) {
-							int distance = Person.distance( persons.getPersonById( id1), persons.getPersonById( id2));
+						if (id1 != id2) {
+							int distance = Person.distance(persons.getPersonById(id1), persons.getPersonById(id2));
 							if( Parameter.meetingPossible( distance)) {
-								String cypherQ = Cypher.createMeeting( id1, id2, distance);
-								tx.run( cypherQ);
+								//String cypherQ = Cypher.createMeeting( id1, id2, distance);
+								tx.run( "MATCH (p:" + Neo4j.labelName.Person + "), (q:" + Neo4j.labelName.Person + ") " +
+						 				"WHERE (p." + Neo4j.fieldName.id + " = $id1 AND q." + Neo4j.fieldName.id + "= $id2)" +
+										"CREATE (p)-[:" + Neo4j.relType.Meeting + " {" + Neo4j.fieldName.distance + ":$distance}]->(q)",
+								 		parameters("id1", id1, "id2", id2, "distance", distance));
 								createdMeetings++;
 								numbMeetings--;
 							}
@@ -426,7 +430,7 @@ public class Neo4j {
 	 */
 	private void setConstraintsIndexes() {
 		setConstraint();
-		//setIndexForPerson( );
+		setIndexForPerson( );
 	}
 	private void setConstraint() {
 		String cypherQ = Cypher.createConstraint();
@@ -437,13 +441,20 @@ public class Neo4j {
 		} catch( Exception e) {
 			Utils.logging( "Constraint :Person( id) already exists");
 		}
-	}
-	
-	/* ToDo
-	private void setIndexForPerson( ) {
-		//IndexDefinition usernamesIndex;
+	}	
+	private void setIndexForPerson( ) {		// index for attribute dayOfInfection and incubationPeriod
+		for( String attributeName : new String[] {Neo4j.fieldName.dayOfInfection.toString(),
+			Neo4j.fieldName.incubationPeriod.toString()}) {
+				try (Session session = driver.session()) {
+					session.run(Cypher.createIndex(attributeName));
+					Utils.logging( "Index Person." + attributeName + " created");
+				} catch(Exception e) {
+					Utils.logging( "Index Person." + attributeName + " already exists");
+				}
+		}
 		
 		// index f�r label Person
+		/*
         try ( Transaction tx = graphDb.beginTx() ) {
             Schema schema = tx.schema();
             schema.indexFor( Label.label( Neo4j.labelName.Person.toString()) )
@@ -472,7 +483,7 @@ public class Neo4j {
     		} catch( Exception e) {
     			Utils.logging( "Index Person." + attributeName + " already exists");
     		}
-        }
-	}
-	*/
+		}
+		*/
+	}	
 }

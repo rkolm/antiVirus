@@ -84,7 +84,20 @@ public class Cypher {
 		return cypherQ;
 	}
 	
-	
+	/*-----------------------------------------------------------------------------
+	/*
+	/* index for Person-attribute
+	/* 
+	/*-----------------------------------------------------------------------------
+	 */	
+	public static String createIndex(String attribute) {
+		String cypherQ = String.format( 
+			"CREATE INDEX idx_%s" +
+			" FOR (p:%s)" +
+			"  ON (p.%s) ",
+			attribute, Neo4j.labelName.Person, attribute);
+		return cypherQ;
+	}
 	
 		
 	/*-----------------------------------------------------------------------------

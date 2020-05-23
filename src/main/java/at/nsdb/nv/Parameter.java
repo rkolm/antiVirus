@@ -10,7 +10,7 @@ public abstract class Parameter {
 	
 	// 1. add biometric attributes to node 
 	// 2. create relations with distance
-	public static final boolean initialize = false;
+	public static final boolean initialize = true;
 
 	
 	// name of the log file
