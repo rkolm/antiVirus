@@ -158,7 +158,7 @@ public class Cypher {
 				"MATCH (p:%s)-[c:%s]->(q:%s) " +
 				"WHERE (q.%s = 0) AND (p.%s > 0) AND (p.%s <= %d) AND (%d <= p.%s + p.%s) " +
 				"WITH q, c.%s AS dist, rand() AS r " +
-				"WHERE (r < 0.5) AND ((r < 0.05) OR (r < 1000 / dist)) " +
+				"WHERE (r < 0.5) AND ((r < 0.05) OR (r < 500 / dist)) " +
 				"set q.%s = %d",
 				Neo4j.labelName.Person, Neo4j.relType.Meeting, Neo4j.labelName.Person, 
 				Neo4j.fieldName.dayOfInfection, Neo4j.fieldName.dayOfInfection, 

@@ -5,7 +5,7 @@ public abstract class Parameter {
 	/*--------------------
 	 * VersionsNr
 	 */
-	public static final String versionNr = "v1.2";
+	public static final String versionNr = "v1.3";
 		
 	
 	// 1. add biometric attributes to node 
@@ -57,8 +57,12 @@ public abstract class Parameter {
 	 * init: is there a connection due to distance? randomly calculated
 	 */
 	public static boolean meetingPossible( int distance) {
-		return Utils.randomGetDouble() < 
-			Math.min( 0.5, Math.max( 0.001, 1 / Math.max( 1,  Math.pow( distance/1000.0, 2))));
+		if( distance < 10) return true;
+		else if( distance < 360) return true;
+		else if( distance < 720) return Utils.randomGetDouble() < 0.75;
+		else if( distance < 100) return Utils.randomGetDouble() < 0.5;
+		else if( distance < 1500) return Utils.randomGetDouble() < 0.25;
+		else return Utils.randomGetDouble() < 1.0/distance;
 	}
 
 }

@@ -116,22 +116,6 @@ public class Neo4j {
 
 		Utils.logging(String.format("creating meetings into database for %d persons ...", persons.getNumberPersons()));
 
-		// works, but very slowly
-		// try( Session session = driver.session()) {
-		// session.writeTransaction( tx -> {
-		// String cypherQ =
-		// "MATCH (p:Person), (q:Person) " +
-		// "WHERE p.id <> q.id " +
-		// "WITH p, q, rand() as r, round( distance( " +
-		// "point( {x:p.longitude, y:p.latitude, crs:'cartesian'}), " +
-		// "point( {x:q.longitude, y:q.latitude, crs:'cartesian'}))) AS dist " +
-		// "WHERE r < 0.1 and (r < 2/dist or r < 0.0002) " +
-		// "CREATE (p)-[m:Meeting {distance:dist}]->(q)";
-		// tx.run( cypherQ);
-		// return 1;
-		// });
-		// }
-
 		// create new relations between persons
 		for (Person p : persons.getAllPersons()) {
 			int id1 = p.getId();
@@ -143,7 +127,8 @@ public class Neo4j {
 						int id2 = persons.getPersonRandomly().getId();
 						lookedMeetings++;
 						if (id1 != id2) {
-							int distance = Person.distance(persons.getPersonById(id1), persons.getPersonById(id2));
+							int distance = 
+								Math.max( 1, Person.distance(persons.getPersonById(id1), persons.getPersonById(id2)));
 							if( Parameter.meetingPossible( distance)) {
 								//String cypherQ = Cypher.createMeeting( id1, id2, distance);
 								tx.run( "MATCH (p:" + Neo4j.labelName.Person + "), (q:" + Neo4j.labelName.Person + ") " +
@@ -179,7 +164,6 @@ public class Neo4j {
 	/*-----------------------------------------------------------------------------
 	 */
 	public StatisticADay day1( ) {
-		// if day0 not executed set all dayOfInfection to 0
 		StatisticADay statisticADay = new StatisticADay();
 		
 		if( ! Parameter.initialize) {
@@ -195,13 +179,17 @@ public class Neo4j {
 		}
 		
 		persons = new Persons( downloadAllPersons());
-		Utils.logging( "infect randomly 1 person");
+		Utils.logging( "infect randomly 1 or 2 persons");
 		try (Session session = driver.session()) {
 			session.writeTransaction(tx -> {
+				// 1. person
 				int id = persons.getPersonRandomly().getId();
 				tx.run( Cypher.infectAPerson( id, 1));
-				this.printStatusPersons( 1, tx);
+				// 2. person
+				id = persons.getPersonRandomly().getId();
+				tx.run( Cypher.infectAPerson( id, 1));
 				
+				this.printStatusPersons( 1, tx);
 				statisticADay.setNumbPersonsHealthy( this.getNumbPersonsHealthy( 1, tx));
 				statisticADay.setNumbPersonsInIncubation( this.getNumbPersonsInIncubation( 1, tx));
 				statisticADay.setNumbPersonsIll( this.getNumbPersonsIll( 1, tx));
@@ -452,38 +440,5 @@ public class Neo4j {
 					Utils.logging( "Index Person." + attributeName + " already exists");
 				}
 		}
-		
-		// index f�r label Person
-		/*
-        try ( Transaction tx = graphDb.beginTx() ) {
-            Schema schema = tx.schema();
-            schema.indexFor( Label.label( Neo4j.labelName.Person.toString()) )
-                .withName( "idx" + Neo4j.labelName.Person.toString())
-                .create();
-            tx.commit();    
-    		Utils.logging( "Index Person." + Neo4j.labelName.Person.toString() + " created");
-    		
-		} catch( Exception e) {
-			Utils.logging( "Index Person." + Neo4j.labelName.Person.toString() + " already exists");
-		}
-        
-        // index f�r attribute dayOfInfection and incubationPeriod
-        //String attributeName = Neo4j.fieldName.dayOfInfection.toString();
-        for( String attributeName : new String[] {Neo4j.fieldName.dayOfInfection.toString(),
-        		Neo4j.fieldName.incubationPeriod.toString()}) {
-            try ( Transaction tx = graphDb.beginTx() ) {
-                Schema schema = tx.schema();
-                schema.indexFor( Label.label( Neo4j.labelName.Person.toString()) )
-                    .on( attributeName)
-                    .withName( "idx" + attributeName)
-                    .create();
-                tx.commit();    
-        		Utils.logging( "Index Person." + attributeName + " created");
-        		
-    		} catch( Exception e) {
-    			Utils.logging( "Index Person." + attributeName + " already exists");
-    		}
-		}
-		*/
 	}	
 }
