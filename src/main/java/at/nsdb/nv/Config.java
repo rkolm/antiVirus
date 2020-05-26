@@ -24,6 +24,7 @@ public final class Config {
      */
     private static Config getInstance() {
         if (instance == null) {
+        	Utils.logging( "new Config");
             instance = new Config();
         }
         return instance;

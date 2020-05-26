@@ -139,9 +139,9 @@ public class Cypher {
 	// download all relations (meetings) 
 	public static String getAllMeetings() {
 		String cypherQ = String.format(
-			"MATCH (p:%s)-[c:%s]->(q) " +
+			"MATCH (p:%s)-[c:%s]->(q:%s) " +
 			"RETURN p, c, q", 
-			Neo4j.labelName.Person, Neo4j.relType.Meeting);
+			Neo4j.labelName.Person, Neo4j.relType.Meeting, Neo4j.labelName.Person);
 		return cypherQ;
 	}
 	

@@ -38,7 +38,6 @@ public class Neo4j {
 		id, age, firstName, longitude, latitude, distance, dayOfInfection, incubationPeriod, illnessPeriod
 	}
 
-	/* .2. */
 	/*-----------------------------------------------------------------------------
 	/*
 	/* variables to manage the database
@@ -46,7 +45,6 @@ public class Neo4j {
 	/*-----------------------------------------------------------------------------
 	 */
 	private Driver driver;
-	/* .2. */
 
 	/*-----------------------------------------------------------------------------
 	/*
@@ -113,10 +111,35 @@ public class Neo4j {
 		}
 		Utils.logging("biometrics attributes for all persons set");
 		persons = new Persons(downloadAllPersons());
-
-		Utils.logging(String.format("creating meetings into database for %d persons ...", persons.getNumberPersons()));
-
-		// create new relations between persons
+		
+		
+		// create relations via cypher, O(n)
+//		Utils.logging(String.format("creating meetings into database for %d persons ...", persons.getNumberPersons()));
+//		// create new relations between persons
+//		try (Session session = driver.session()) {
+//			session.writeTransaction(tx -> {
+//				tx.run(
+//					"MATCH (p:Person) " + 
+//					"CALL { " + 
+//					"	MATCH (q:Person) " + 
+//					"	WHERE rand() < 0.2 " + 
+//					"	RETURN q as q " + 
+//					"} " + 
+//					"WITH p, q, rand() as r, " +
+//						"round( 1 + distance( " +
+//							"point( {x:p.longitude, y:p.latitude, crs:'cartesian'}), " +
+//							"point( {x:q.longitude, y:q.latitude, crs:'cartesian'}))) AS dist " + 
+//					"WHERE r < 1000.0/dist/dist " + 
+//					"CREATE (p)-[m:Meeting {distance:dist}]->(q)");
+//				
+//				Utils.logging( String.format( "%d relations created!",
+//					this.getNumbMeetings(tx)));
+//				return 1;
+//			});	
+//		}
+		
+		
+		
 		for (Person p : persons.getAllPersons()) {
 			int id1 = p.getId();
 			try (Session session = driver.session()) {
@@ -389,7 +412,6 @@ public class Neo4j {
 				Utils.logging( String.format("%d (%d) relations found, for example:",
 					meetings.size(), this.getNumbMeetings( tx)));
 				
-			
 				// print randomly 3 meetings
 				for (int i = 1; i <= Math.min( 3, meetings.size()); i++) {
 					Utils.logging( meetings.elementAt(Utils.randomGetInt( 0, meetings.size() - 1)));
