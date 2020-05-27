@@ -267,6 +267,62 @@ public class Cypher {
 			Neo4j.relType.Meeting);
 		return cypherQ;
 	}
+	
+	
+	
+	
+	/*-----------------------------------------------------------------------------
+	/*
+	/* set labels depending on status
+	/* 
+	/*-----------------------------------------------------------------------------
+	 */		
+	// set node label to all :Persons who are healthy
+	public static String setLabelHealthy( int day) {
+		String cypherQ =
+			"MATCH (p:" + Neo4j.labelName.Person + ") " +
+			"WHERE p." + Neo4j.fieldName.dayOfInfection + " = 0 " +
+			"SET p:" + Person.status.healthy.toString();
+		return cypherQ;
+	}
+	
+	// set node label to all :Persons who are in incubation period
+	public static String setLabelInIncubation( int day) {
+		String cypherQ = 
+			"MATCH (p:" + Neo4j.labelName.Person + ") " + 
+			"WHERE (p." + Neo4j.fieldName.dayOfInfection + " > 0) " +
+				"AND (p." + Neo4j.fieldName.dayOfInfection + " <= " + day + ") " +
+				"AND (" + day + " <= " +
+					"p." + Neo4j.fieldName.dayOfInfection + " + p." + Neo4j.fieldName.incubationPeriod + ")" +
+			"SET p: " + Person.status.inIncubation.toString(); 
+		return cypherQ;
+	}
+	
+	// set node label to all :Persons who are ill
+	public static String setLabelIll( int day) {
+		String cypherQ = 	
+			"MATCH (p:" + Neo4j.labelName.Person + ") " +
+			"WHERE (p." + Neo4j.fieldName.dayOfInfection + " > 0) " + 
+				"AND (p." + Neo4j.fieldName.dayOfInfection + " + p." + Neo4j.fieldName.incubationPeriod + 
+					" < " + day + ") " +
+				"AND (" + day + " <= " + 
+					"p." + Neo4j.fieldName.dayOfInfection + " + p." + Neo4j.fieldName.incubationPeriod + 
+						" + p." + Neo4j.fieldName.illnessPeriod + ") " +
+			"SET p: " + Person.status.ill.toString();
+		return cypherQ;
+	}
+	
+	// set node label to all :Persons who are immune
+	public static String setLabelImmune( int day) {
+		String cypherQ =
+			"MATCH (p:" + Neo4j.labelName.Person + ") " +
+			"WHERE (p." + Neo4j.fieldName.dayOfInfection + " > 0) " + 
+				"AND (" + day + " > " + 
+					"p." + Neo4j.fieldName.dayOfInfection + " + p." + Neo4j.fieldName.incubationPeriod + 
+						" + p." + Neo4j.fieldName.illnessPeriod + ") " +
+			"SET p: " + Person.status.immune.toString();
+		return cypherQ;
+	}
 }
 	
 	

@@ -201,6 +201,9 @@ public class Neo4j {
 			}	
 		}
 		
+		// delete all labels (except :Person) from node:Person
+		this.deleteAllLabels();
+		
 		persons = new Persons( downloadAllPersons());
 		Utils.logging( "infect randomly 1 or 2 persons");
 		try (Session session = driver.session()) {
@@ -248,6 +251,10 @@ public class Neo4j {
 				return 1;
 			});
 		}
+		
+		this.deleteAllLabels();
+		this.setAllLabels( day);
+		
 		return statisticADay;
 	}
 
@@ -256,11 +263,47 @@ public class Neo4j {
 	
 	/*-----------------------------------------------------------------------------
 	/*
+	/* set/delete the labels of the nodes
+	/* 
+	/*-----------------------------------------------------------------------------
+	 */
+	private void deleteAllLabels() {
+		try (Session session = driver.session()) {
+			session.writeTransaction(tx -> {
+				for( Person.status status : Person.status.values()) {
+					String cypher = 
+						"MATCH (p:" + Neo4j.labelName.Person + ") " +
+						"REMOVE p:" + status.toString();
+					tx.run( cypher);
+					Utils.logging("all biometrics labels removed");
+				}
+				return 1;
+			});
+		}
+	}
+	private void setAllLabels( int day) {
+		try (Session session = driver.session()) {
+			session.writeTransaction(tx -> {
+				// set labels to healthy, inIncubation, ill, immune: depending on status of :Person
+				tx.run( Cypher.setLabelHealthy( day));
+				tx.run( Cypher.setLabelInIncubation( day));
+				tx.run( Cypher.setLabelIll( day));
+				tx.run( Cypher.setLabelImmune( day));
+				return 1;
+			});
+		}
+	}
+	
+	
+	
+	
+	
+	/*-----------------------------------------------------------------------------
+	/*
 	/* get the numbers of records of different questions
 	/* 
 	/*-----------------------------------------------------------------------------
 	 */
-	
 	// how many persons (nodes) in the database?
 	private int getNumbPersons( Transaction tx) {
 		String cypherQ = Cypher.numbPersons();
