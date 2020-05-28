@@ -264,9 +264,11 @@ public class Neo4j {
 				// 1. person
 				int id = persons.getPersonRandomly().getId();
 				tx.run( Cypher.infectAPerson( id, 1));
+				Utils.logging( "id " + id + " infected on day 1");
 				// 2. person
 				id = persons.getPersonRandomly().getId();
 				tx.run( Cypher.infectAPerson( id, 1));
+				Utils.logging( "id " + id + " infected on day 1");
 				return 1;
 			});
 		}
