@@ -9,6 +9,8 @@ public class Persons {
 	private int minLatitude = Integer.MAX_VALUE;
 	private int maxLatitude = Integer.MIN_VALUE;
 	private int minId = Integer.MAX_VALUE;
+	
+	
 		
 	public Persons( Vector<Person> persons) {
 		this.persons= persons;

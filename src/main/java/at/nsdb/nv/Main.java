@@ -1,15 +1,6 @@
 /*----------------------------------------------------
  * simulate the spreading of a virus
  * 
- * input: personal data (e.g. name, residence- address, age) of at least 100,000 persons
- * 
- * ToDo:
- * 1. create geo- position (longitude, latitude) of the addresses
- * 2. create an import csv file and import the personal- data into neo4J (long/lat included)
- * 3. add some model data to the personal- nodes in the neo4j- databases, eg. period of incubation
- * 4. add relations (distance, probability to meet) between persons depending of the distance of their residence
- * 5.  
- * 
  */
 
 package at.nsdb.nv;
@@ -33,7 +24,6 @@ public class Main  extends JFrame {
 		Utils.logging( "logFile = " + Parameter.logFileFullFileName());
 		
 		
-		
 		/*--------------------
 		 * connect to DB
 		 */
@@ -45,11 +35,10 @@ public class Main  extends JFrame {
 		 * initializing database, optional, if neo4j structure is up to date
 		 * 1. add biometric attributes to node 2. create relations with distance
 		 */
-		if( Parameter.initialize) {
-			Utils.logging( "**** initialization ...");
-			neo4j.initialize();
-			Utils.logging( "---- initialization finished");
-		}
+		Utils.logging( "**** initialization ...");
+		neo4j.initialize();
+		Utils.logging( "---- initialization finished");
+
 
 		
 		
@@ -71,7 +60,7 @@ public class Main  extends JFrame {
 			statistics.put( day, neo4j.day( day));
 			new PanelPersons( day, statistics, neo4j.getAllPersons()).repaint();
 			//MyTimer.delay( 2000);
-		} while( day <= 365 && statistics.get( day).getNumbPersonsInIncubation() > 0);
+		} while( day <= Parameter.stopAfterDay && statistics.get( day).getNumbPersonsInIncubation() > 0);
 		
 		
 		

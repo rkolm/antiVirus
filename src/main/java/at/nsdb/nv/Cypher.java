@@ -132,39 +132,35 @@ public class Cypher {
 	
 	/*-----------------------------------------------------------------------------
 	/*
-	/* download MEETING (relation)
+	/* download canInfect (relation)
 	/* 
 	/*-----------------------------------------------------------------------------
 	 */	
-	// download all relations (meetings) 
-	public static String getAllMeetings() {
+	// download all relations (canInfect) 
+	public static String getAllCanInfect() {
 		String cypherQ = String.format(
 			"MATCH (p:%s)-[c:%s]->(q:%s) " +
 			"RETURN p, c, q", 
-			Neo4j.labelName.Person, Neo4j.relType.Meeting, Neo4j.labelName.Person);
+			Neo4j.labelName.Person, Neo4j.relType.CanInfect, Neo4j.labelName.Person);
 		return cypherQ;
 	}
 	
 	
 	// get id2 and distance from all persons who can be infected
 	public static String infectPersons( int day) {
-//		i.e.
-//		MATCH (p:Person)-[c:Meeting]->(q:Person) 
-//		WHERE (q.dayOfInfection = 0) AND (p.dayOfInfection > 0) AND (p.dayOfInfection <= 2) AND (2 <= p.dayOfInfection + p.incubationPeriod) 
-//		WITH q, c.distance AS dist, rand() AS r 
-//		WHERE (r < 0.25) AND ((r < 0.01) OR (r < 1000 / dist)) 
-//		set q.dayOfInfection = 2
 		String cypherQ = String.format(
 				"MATCH (p:%s)-[c:%s]->(q:%s) " +
 				"WHERE (q.%s = 0) AND (p.%s > 0) AND (p.%s <= %d) AND (%d <= p.%s + p.%s) " +
-				"WITH q, c.%s AS dist, rand() AS r " +
-				"WHERE (r < 0.5) AND ((r < 0.05) OR (r < 500 / dist)) " +
-				"set q.%s = %d",
-				Neo4j.labelName.Person, Neo4j.relType.Meeting, Neo4j.labelName.Person, 
+				"WITH p, q, c.%s AS dist, rand() AS r " +
+				"WHERE ((r < 0.01) OR (r < 1000.0 * 100.0 / dist / dist)) " +
+				"set q.%s = %d " +
+				"CREATE (p)-[:" + Neo4j.relType2nd.HasInfected + 
+					" {" + Neo4j.relAttribute.day + ":" + day + "}]->(q)",
+				Neo4j.labelName.Person, Neo4j.relType.CanInfect, Neo4j.labelName.Person, 
 				Neo4j.fieldName.dayOfInfection, Neo4j.fieldName.dayOfInfection, 
 					Neo4j.fieldName.dayOfInfection, day, day, Neo4j.fieldName.dayOfInfection,
 					Neo4j.fieldName.incubationPeriod,
-				Neo4j.fieldName.distance.toString(),
+				Neo4j.relAttribute.distance.toString(),
 				Neo4j.fieldName.dayOfInfection,	day);
 		return cypherQ;
 	}
@@ -174,24 +170,24 @@ public class Cypher {
 	
 	/*-----------------------------------------------------------------------------
 	/*
-	/* manipulate relations i.e. MEETINGs between 2 persons
+	/* manipulate relations i.e. canInfect between 2 persons
 	/* 
 	/*-----------------------------------------------------------------------------
 	 */	
-	// delete all relations in neo4j
-	public static String removeAllRelationsMeeting() {
+	// remove all relations in neo4j
+	public static String removeAllRelations( Neo4j.relType2nd relType) {
 		String cypherQ = String.format( "Match ()-[m:%s]->() delete m",
-			Neo4j.relType.Meeting);
+			relType);
 		return cypherQ;
 	}
 	
-	// create a Meeting- relation between 2 persons
-	public static String createMeeting( int id1, int id2, int distance) {
+	// create a canInfect- relation between 2 persons
+	public static String createCanInfect( int id1, int id2, int distance) {
 		String cypherQ = String.format(
 				"MATCH (p:%s {id: %d}), (q:%s {id: %d}) " +
 				"CREATE (p)-[:%s {distance:%d}]->(q)", 
 				Neo4j.labelName.Person, id1, Neo4j.labelName.Person, id2,
-				Neo4j.relType.Meeting, distance);
+				Neo4j.relType.CanInfect, distance);
 		return cypherQ;
 	}
 
@@ -216,55 +212,76 @@ public class Cypher {
 	
 	// number of persons who are healthy
 	public static String numbPersonsHealthy( int day) {
-		String cypherQ = String.format(	
-			"MATCH (p:%s) " + 
-			"WHERE (p.%s = 0) " +
-			"RETURN count( p) as count",
-			Neo4j.labelName.Person, Neo4j.fieldName.dayOfInfection);
+//		String cypherQ = String.format(	
+//			"MATCH (p:%s) " + 
+//			"WHERE (p.%s = 0) " +
+//			"RETURN count( p) as count",
+//			Neo4j.labelName.Person, Neo4j.fieldName.dayOfInfection);
+		String cypherQ = 
+			"MATCH (p:" + Neo4j.labelName2nd.Healthy.toString() + ") " +
+			"RETURN count( p) as count";
 		return cypherQ;
 	}
 	
 	// number of persons in incubation period
 	public static String numbPersonsInIncubation( int day) {
-		String cypherQ = String.format(	
-			"MATCH (p:%s) " + 
-			"WHERE (p.%s > 0) AND (p.%s <= %d) AND (%d <= p.%s + p.%s) " +
-			"RETURN count( p) as count",
-			Neo4j.labelName.Person, Neo4j.fieldName.dayOfInfection, 
-			Neo4j.fieldName.dayOfInfection, day,
-			day, Neo4j.fieldName.dayOfInfection, Neo4j.fieldName.incubationPeriod);
+//		String cypherQ = String.format(	
+//			"MATCH (p:%s) " + 
+//			"WHERE (p.%s > 0) AND (p.%s <= %d) AND (%d <= p.%s + p.%s) " +
+//			"RETURN count( p) as count",
+//			Neo4j.labelName.Person, Neo4j.fieldName.dayOfInfection, 
+//			Neo4j.fieldName.dayOfInfection, day,
+//			day, Neo4j.fieldName.dayOfInfection, Neo4j.fieldName.incubationPeriod);
+			String cypherQ = 
+				"MATCH (p:" + Neo4j.labelName2nd.InIncubation.toString() + ") " +
+				"RETURN count( p) as count";
 		return cypherQ;
 	}
 	
 	// number of persons who are ill
 	public static String numbPersonsIll( int day) {
-		String cypherQ = String.format(	
-			"MATCH (p:%s) " + 
-			"WHERE (p.%s > 0) AND (p.%s + p.%s < %d) AND (%d <= p.%s + p.%s + p.%s) " +
-			"RETURN count( p) as count",
-			Neo4j.labelName.Person, Neo4j.fieldName.dayOfInfection, 
-			Neo4j.fieldName.dayOfInfection, Neo4j.fieldName.incubationPeriod, day,
-			day, Neo4j.fieldName.dayOfInfection, Neo4j.fieldName.incubationPeriod, Neo4j.fieldName.illnessPeriod);
+//		String cypherQ = String.format(	
+//			"MATCH (p:%s) " + 
+//			"WHERE (p.%s > 0) AND (p.%s + p.%s < %d) AND (%d <= p.%s + p.%s + p.%s) " +
+//			"RETURN count( p) as count",
+//			Neo4j.labelName.Person, Neo4j.fieldName.dayOfInfection, 
+//			Neo4j.fieldName.dayOfInfection, Neo4j.fieldName.incubationPeriod, day,
+//			day, Neo4j.fieldName.dayOfInfection, Neo4j.fieldName.incubationPeriod, Neo4j.fieldName.illnessPeriod);
+			String cypherQ = 
+				"MATCH (p:" + Neo4j.labelName2nd.Ill.toString() + ") " +
+				"RETURN count( p) as count";
 		return cypherQ;
 	}
 	
 	// number of immune (after illness) persons
 	public static String numbPersonsImmune( int day) {
-		String cypherQ = String.format(	
-			"MATCH (p:%s) " + 
-			"WHERE (p.%s > 0) AND (%d > p.%s + p.%s + p.%s) " +
-			"RETURN count( p) as count", 
-			Neo4j.labelName.Person, Neo4j.fieldName.dayOfInfection, 
-			day, Neo4j.fieldName.dayOfInfection, Neo4j.fieldName.incubationPeriod, Neo4j.fieldName.illnessPeriod);
+//		String cypherQ = String.format(	
+//			"MATCH (p:%s) " + 
+//			"WHERE (p.%s > 0) AND (%d > p.%s + p.%s + p.%s) " +
+//			"RETURN count( p) as count", 
+//			Neo4j.labelName.Person, Neo4j.fieldName.dayOfInfection, 
+//			day, Neo4j.fieldName.dayOfInfection, Neo4j.fieldName.incubationPeriod, Neo4j.fieldName.illnessPeriod);
+			String cypherQ = 
+				"MATCH (p:" + Neo4j.labelName2nd.Immune.toString() + ") " +
+				"RETURN count( p) as count";
 		return cypherQ;
 	}
 	
-	// number of relations (meetings)
-	public static String numbMeetings() {
+	// number of immune (after illness) persons
+	public static String numbPersonsWithAttribute( String attributeName) {
+		String cypherQ =
+			"MATCH (p:" + Neo4j.labelName.Person + " ) " +
+			"WHERE EXISTS( p." + attributeName + ") " +
+			"RETURN count( p) as count";
+		return cypherQ;
+	}
+	
+	// number of relations (canInfect)
+	public static String numbCanInfects() {
 		String cypherQ = String.format( 
 			"MATCH ()-[r:%s]->() " +
 			"RETURN count(r) as count",
-			Neo4j.relType.Meeting);
+			Neo4j.relType.CanInfect);
 		return cypherQ;
 	}
 	
@@ -282,7 +299,7 @@ public class Cypher {
 		String cypherQ =
 			"MATCH (p:" + Neo4j.labelName.Person + ") " +
 			"WHERE p." + Neo4j.fieldName.dayOfInfection + " = 0 " +
-			"SET p:" + Person.status.healthy.toString();
+			"SET p:" + Neo4j.labelName2nd.Healthy.toString();
 		return cypherQ;
 	}
 	
@@ -294,7 +311,7 @@ public class Cypher {
 				"AND (p." + Neo4j.fieldName.dayOfInfection + " <= " + day + ") " +
 				"AND (" + day + " <= " +
 					"p." + Neo4j.fieldName.dayOfInfection + " + p." + Neo4j.fieldName.incubationPeriod + ")" +
-			"SET p: " + Person.status.inIncubation.toString(); 
+			"SET p: " + Neo4j.labelName2nd.InIncubation.toString(); 
 		return cypherQ;
 	}
 	
@@ -308,7 +325,7 @@ public class Cypher {
 				"AND (" + day + " <= " + 
 					"p." + Neo4j.fieldName.dayOfInfection + " + p." + Neo4j.fieldName.incubationPeriod + 
 						" + p." + Neo4j.fieldName.illnessPeriod + ") " +
-			"SET p: " + Person.status.ill.toString();
+			"SET p: " + Neo4j.labelName2nd.Ill.toString();
 		return cypherQ;
 	}
 	
@@ -320,7 +337,7 @@ public class Cypher {
 				"AND (" + day + " > " + 
 					"p." + Neo4j.fieldName.dayOfInfection + " + p." + Neo4j.fieldName.incubationPeriod + 
 						" + p." + Neo4j.fieldName.illnessPeriod + ") " +
-			"SET p: " + Person.status.immune.toString();
+			"SET p: " + Neo4j.labelName2nd.Immune.toString();
 		return cypherQ;
 	}
 }

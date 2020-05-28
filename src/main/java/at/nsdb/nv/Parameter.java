@@ -1,31 +1,36 @@
 package at.nsdb.nv;
 
+import java.util.HashMap;
+
 public abstract class Parameter {
+	
+	/*--------------------
+	 * Programstop after day
+	 */
+	public static final int stopAfterDay = 12; // best value 365
 	
 	/*--------------------
 	 * VersionsNr
 	 */
-	public static final String versionNr = "v1.3";
-		
-	
-	// 1. add biometric attributes to node 
-	// 2. create relations with distance
-	public static final boolean initialize = false;
-
+	public static final String versionNr = "v1.4";
 	
 	// name of the log file
-	private static String logFile = "logging.txt"; 
-	
-
-	
-	/*--------------------
-	 * get the full path/filename on relative directory
-	 */
+	private static String logFile = "logging.txt"; 	
 	public static String logFileFullFileName() {
 		if( logFile == "") return "";
 		else {
 			String projectDirectory = System.getProperty("user.dir");
 			return projectDirectory.substring( 0, projectDirectory.lastIndexOf( "\\") + 1) + logFile;
+		}
+	}
+	
+	// if :CanInfect created -> export to .csv
+	private static String canInfectFile = "canInfect.csv"; 
+	public static String canInfectFileFullFileName() {
+		if( logFile == "") return "";
+		else {
+			String projectDirectory = System.getProperty("user.dir");
+			return projectDirectory.substring( 0, projectDirectory.lastIndexOf( "\\") + 1) + canInfectFile;
 		}
 	}
 	
@@ -36,19 +41,25 @@ public abstract class Parameter {
 	 */
 	public static int calculateRandomlyIncubationPeriod() {
 		// min=1, max=14, avg=7, dev=2
-		return Utils.randomGetGauss( 1, 14, 7, 2); 
+		return Utils.randomGetGauss( 
+			Config.getIncubationGaussValue( "Min"), Config.getIncubationGaussValue( "Max"),
+			Config.getIncubationGaussValue( "Avg"), Config.getIncubationGaussValue( "Deviation")); 
 	}
 	public static int calculateRandomlyIllnessPeriod() {
-		return Utils.randomGetGauss( 1, 17, 9, 2);
+		return Utils.randomGetGauss( 
+			Config.getIllnessGaussValue( "Min"), Config.getIllnessGaussValue( "Max"),
+			Config.getIllnessGaussValue( "Avg"), Config.getIllnessGaussValue( "Deviation")); 
 	}
 	
 	
 	
 	/*--------------------
-	 * how many meetings has a person ?
+	 * how many CanInfect has a person ?
 	 */
-	public static int calculateRandomlyNumbMeetings() {
-		return Utils.randomGetGauss( 5, 15, 10, 2);
+	public static int calculateRandomlyNumbCanInfect() {
+		return Utils.randomGetGauss(
+			Config.getCanInfectGaussValue( "Min"), Config.getCanInfectGaussValue( "Max"),
+			Config.getCanInfectGaussValue( "Avg"), Config.getCanInfectGaussValue( "Deviation")); 
 	}
 	
 	
@@ -56,13 +67,8 @@ public abstract class Parameter {
 	/*--------------------
 	 * init: is there a connection due to distance? randomly calculated
 	 */
-	public static boolean meetingPossible( int distance) {
-		if( distance < 10) return true;
-		else if( distance < 360) return true;
-		else if( distance < 720) return Utils.randomGetDouble() < 0.75;
-		else if( distance < 100) return Utils.randomGetDouble() < 0.5;
-		else if( distance < 1500) return Utils.randomGetDouble() < 0.25;
-		else return Utils.randomGetDouble() < 1.0/distance;
+	public static boolean canInfect( int distance) {
+		return Utils.randomGetDouble() < 1.0 / Math.pow( distance/500.0, 2.0);
 	}
 
 }
