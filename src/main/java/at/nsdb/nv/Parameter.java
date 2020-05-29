@@ -7,7 +7,7 @@ public abstract class Parameter {
 	/*--------------------
 	 * Programstop after day
 	 */
-	public static final int stopAfterDay = 12; // best value 365
+	public static final int stopAfterDay = 365; // best value 365
 	
 	/*--------------------
 	 * VersionsNr

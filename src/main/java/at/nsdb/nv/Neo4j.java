@@ -1,9 +1,10 @@
 package at.nsdb.nv;
 
+import static org.neo4j.driver.Values.parameters;
+
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Vector;
 
@@ -14,7 +15,6 @@ import org.neo4j.driver.Record;
 import org.neo4j.driver.Result;
 import org.neo4j.driver.Session;
 import org.neo4j.driver.Transaction;
-import static org.neo4j.driver.Values.parameters;
 import org.neo4j.driver.types.Node;
 import org.neo4j.driver.types.Relationship;
 
@@ -200,9 +200,9 @@ public class Neo4j {
 						
 						if( Math.floorMod( nodesDone, Math.min( 2500, (int)(persons.getNumberPersons() / 10))) == 0) {
 							Utils.logging( String.format( 
-								"%7d/%d (%6.2f%%) persons, %7d CanInfect created, %7d lookings", 
+								"%7d/%d, (%6.2f%%) persons, %7d CanInfect created, %7.1f Mio lookings", 
 								nodesDone, persons.getNumberPersons(), 100.0 * nodesDone / persons.getNumberPersons(),
-									createdCanInfect, lookedCanInfect));
+									createdCanInfect, lookedCanInfect/1000000.0));
 						}
 						return 1;
 					});
@@ -304,8 +304,8 @@ public class Neo4j {
 			session.writeTransaction(tx -> {
 				
 				tx.run( Cypher.infectPersons( day));
-				
 				this.printStatusPersons( day, tx);
+				
 				statisticADay.setNumbPersonsHealthy( this.getNumbPersonsHealthy( day, tx));
 				statisticADay.setNumbPersonsInIncubation( this.getNumbPersonsInIncubation( day, tx));
 				statisticADay.setNumbPersonsIll( this.getNumbPersonsIll( day, tx));
@@ -319,6 +319,7 @@ public class Neo4j {
 		this.setAllLabels2nd( day);
 		
 		return statisticADay;
+		
 	}
 
 
@@ -592,7 +593,7 @@ public class Neo4j {
 		for( String attributeName : new String[] {Neo4j.fieldName.dayOfInfection.toString(),
 			Neo4j.fieldName.incubationPeriod.toString()}) {
 				try (Session session = driver.session()) {
-					session.run(Cypher.createIndex(attributeName));
+					session.run( Cypher.createIndex(attributeName));
 					Utils.logging( "Index Person." + attributeName + " created");
 				} catch(Exception e) {
 					Utils.logging( "Index Person." + attributeName + " already exists");

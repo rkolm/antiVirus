@@ -42,15 +42,15 @@ public class PanelPersons extends JFrame {
 				
 				for( Person p : persons.getAllPersons()) {					
 					g2.setColor(Color.white);
-					if( p.getStatus( day) == Person.status.healthy) g2.setColor(Color.yellow);
-					if( p.getStatus( day) == Person.status.inIncubation) g2.setColor(Color.red);
-					if( p.getStatus( day) == Person.status.ill) g2.setColor(Color.black);
-					if( p.getStatus( day) == Person.status.immune) g2.setColor(Color.green);
+					if( p.getStatus( day) == Person.status.healthy) g2.setColor( Color.yellow);
+					if( p.getStatus( day) == Person.status.inIncubation) g2.setColor( Color.red);
+					if( p.getStatus( day) == Person.status.ill) g2.setColor( Color.black);
+					if( p.getStatus( day) == Person.status.immune) g2.setColor( Color.green);
 					
-					int w = (int) ((double)(p.getLongitude()-persons.getMinLongitude()) / 
-						(persons.getMaxLongitude()-persons.getMinLongitude()) * (panelWidth-2) + 1.0);
-					int h = (int) ((double)(p.getLatitude()-persons.getMinLatitude()) / 
-						(persons.getMaxLatitude()-persons.getMinLatitude()) * (panelHeight-2) + 1.0);
+					int w = (int) ((double)( p.getLongitude()-persons.getMinLongitude()) / 
+						( persons.getMaxLongitude()-persons.getMinLongitude()) * (panelWidth-2) + 1.0);
+					int h = (int) ((double) (p.getLatitude()-persons.getMinLatitude()) / 
+						( persons.getMaxLatitude()-persons.getMinLatitude()) * (panelHeight-2) + 1.0);
 					g2.drawRect( w, h, 1, 1);
 					//Utils.logging( String.format( "l=%d h=%d", w, h));
 				};
