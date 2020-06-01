@@ -1,7 +1,5 @@
 package at.nsdb.nv;
 
-import java.util.HashMap;
-
 public abstract class Parameter {
 	
 	/*--------------------

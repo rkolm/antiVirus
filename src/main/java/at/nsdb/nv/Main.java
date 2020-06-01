@@ -58,7 +58,7 @@ public class Main  extends JFrame {
 		do {
 			day++;
 			statistics.put( day, neo4j.day( day));
-			new PanelPersons( day, statistics, neo4j.getAllPersons()).repaint();
+			PanelPersons.getInstance().paintPanelPerson(day, statistics, neo4j.getAllPersons());
 			//MyTimer.delay( 2000);
 		} while( day <= Parameter.stopAfterDay && statistics.get( day).getNumbPersonsInIncubation() > 0);
 		
