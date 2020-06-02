@@ -318,8 +318,7 @@ public class Neo4j {
 		this.deleteAllLabels2nd();
 		this.setAllLabels2nd( day);
 		
-		return statisticADay;
-		
+		return statisticADay;	
 	}
 
 
