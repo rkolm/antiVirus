@@ -54,11 +54,8 @@ public class StatisticADay {
 			Config.getCanInfectGaussValue( "Avg");
 	}
 	
-	public int getNumbPersonsInIncubationAndIll( ) {
-		return numbPersonsInIncubation + numbPersonsIll;
-	}
-	public int getNumPersonsAll() {
-		return numbPersonsHealthy + numbPersonsInIncubation + numbPersonsIll + numbPersonsImmune;
-	}
-	
+	public double getQ() {
+		return (double) (newNumbPersonsInIncubation + numbPersonsInIncubation) /
+			(numbPersonsHealthy + numbPersonsInIncubation + numbPersonsIll + numbPersonsImmune);
+	}	
 }

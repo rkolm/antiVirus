@@ -91,16 +91,14 @@ public class PanelPersons extends JFrame {
 		statistics.forEach( (day, statisticADay) -> {
 			if( (day >= 10) && (Math.floorMod( day, 2) == 0)) {
 				g2.setColor( Color.black);
-				g2.drawString( String.format( "%d.%5.1f%% R=%.2f", 
-						day, 
-						100.0 * statisticADay.getNumbPersonsInIncubationAndIll() / statisticADay.getNumPersonsAll(), 
-						statisticADay.getR()), 
+				g2.drawString( String.format( "%d: R=%5.2f Q=%5.1f%%", 
+						day,  statisticADay.getR(), statisticADay.getQ()*100), 
 					(int)(panelWidth * 0.71), (day-9) * 6 + 12);
 				
 				g2.setColor( Color.orange);
 				g2.fillRect( 
-					(int)(panelWidth * 0.795), (day-9) * 6, 
-					(int)Math.min( 0.205*panelWidth-1, (int)(statisticADay.getR() * 60)), 10);
+					(int)(panelWidth * 0.82), (day-9) * 6, 
+					(int)( 0.18 * (panelWidth-1) * statisticADay.getQ()), 10);
 			}
 		});
 	}

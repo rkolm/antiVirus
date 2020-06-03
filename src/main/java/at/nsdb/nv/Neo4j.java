@@ -279,8 +279,9 @@ public class Neo4j {
 		}
 		else {
 			try (Session session = driver.session()) {
-				session.writeTransaction(tx -> {		
-					tx.run( Cypher.infectPersons( day));	
+				session.writeTransaction(tx -> {
+					double quote = Math.max( Math.min( 1.0, 1-statistics.get( day-1).getQ()), 0.5);
+					tx.run( Cypher.infectPersons( day, quote));	
 					return 1;
 				});
 			}
@@ -562,13 +563,13 @@ public class Neo4j {
 	}
 	public static String getStatusPersons( int day, StatisticADay statisticADay) {
 		return String.format( 
-			"day=%d healthy=%d incubation=%d(%d) ill=%d(%d) immune=%d(%d) R'=%.2f",
+			"day=%d healthy=%d incubation=%d(%d) ill=%d(%d) immune=%d(%d) R=%5.2f Q=%5.1f%%",
 				day, 
 				statisticADay.getNumbPersonsHealthy(), 
 				statisticADay.getNumbPersonsInIncubation(), statisticADay.getNewNumbPersonsInIncubation(),
 				statisticADay.getNumbPersonsIll(), statisticADay.getNewNumbPersonsIll(),
 				statisticADay.getNumbPersonsImmune(), statisticADay.getNewNumbPersonsImmune(),
-				statisticADay.getR());
+				statisticADay.getR(), statisticADay.getQ()*100);
 	}
 		
 	

@@ -191,12 +191,12 @@ public class Cypher {
 	
 	
 	// get id2 and distance from all persons who can be infected
-	public static String infectPersons( int day) {
+	public static String infectPersons( int day, double quote) {
 		String cypherQ = String.format(
 				"MATCH (p:%s)-[c:%s]->(q:%s) " +
 				"WHERE (q.%s = 0) AND (p.%s > 0) AND (p.%s <= %d) AND (%d <= p.%s + p.%s) " +
 				"WITH p, q, c.%s AS dist, rand() AS r " +
-				"WHERE ((r < 0.01) OR (r < 1000.0 * 100.0 / dist / dist)) " +
+				"WHERE ((r < 0.01) OR (r < " + quote + " * 1000.0 * 100.0 / dist / dist)) " +
 				"set q.%s = %d " +
 				"CREATE (p)-[:" + Neo4j.relType2nd.HasInfected + 
 					" {" + Neo4j.relAttribute.day + ":" + day + "}]->(q)",
