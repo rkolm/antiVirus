@@ -39,27 +39,19 @@ public class Main  extends JFrame {
 		neo4j.initialize();
 		Utils.logging( "---- initialization finished");
 
-
-		
-		
-		/*--------------------
-		 * Day 1, infect randomly 1. person
-		 */		
-		Utils.logging( "**** Day 1 ...");
-		statistics.put( 1, neo4j.day1());
-		Utils.logging( "---- Day 1 finished");
-		
 		
 		
 		/*--------------------
 		 * calculate the spreading of the virus day by day
 		 */		
-		int day = 1;
+		int day = 0;
 		do {
 			day++;
-			statistics.put( day, neo4j.day( day));
-			PanelPersons.getInstance().paintPanelPerson(day, statistics, neo4j.getAllPersons());
-			//MyTimer.delay( 2000);
+			if( day == 1) Utils.logging( "**** Day 1 ...");
+			neo4j.day( day, statistics);
+			PanelPersons.getInstance( neo4j).paintPanelPerson( day, statistics);
+			if( day == 1) Utils.logging( "---- Day 1 finished");
+			else neo4j.printStatusPersons( day, statistics.get( day));
 		} while( day <= Parameter.stopAfterDay && statistics.get( day).getNumbPersonsInIncubation() > 0);
 		
 		

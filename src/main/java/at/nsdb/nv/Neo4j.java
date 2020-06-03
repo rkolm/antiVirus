@@ -5,6 +5,7 @@ import static org.neo4j.driver.Values.parameters;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Vector;
 
@@ -21,7 +22,7 @@ import org.neo4j.driver.types.Relationship;
 public class Neo4j {
 
 	private int createdCanInfect = 0;
-	private int lookedCanInfect = 0;
+	private int lookings = 0;
 	private int nodesDone = 0;
 	private Persons persons;
 
@@ -110,9 +111,9 @@ public class Neo4j {
 				});
 			}
 	
-			persons = new Persons(downloadAllPersons());
+			persons = new Persons( downloadAllPersons());
 			// set content to biometric attributes
-			Utils.logging("set biometrics contents for all persons ...");
+			Utils.logging("set biometrics contents to all persons ...");
 			try (Session session = driver.session()) {
 				session.writeTransaction(tx -> {
 					// set biometrics and upload to neo4j
@@ -180,7 +181,7 @@ public class Neo4j {
 						int numbCanInfect = Parameter.calculateRandomlyNumbCanInfect();
 						do {
 							int id2 = persons.getPersonRandomly().getId();
-							lookedCanInfect++;
+							lookings++;
 							if( (id1 != id2) && (! hashSet.contains( id1 + "-" + id2))) {
 								int distance = 
 									Math.max( 1, Person.distance( persons.getPersonById(id1), persons.getPersonById(id2)));
@@ -202,7 +203,7 @@ public class Neo4j {
 							Utils.logging( String.format( 
 								"%7d/%d, (%6.2f%%) persons, %7d CanInfect created, %7.1f Mio lookings", 
 								nodesDone, persons.getNumberPersons(), 100.0 * nodesDone / persons.getNumberPersons(),
-									createdCanInfect, lookedCanInfect/1000000.0));
+									createdCanInfect, lookings/1000000.0));
 						}
 						return 1;
 					});
@@ -239,86 +240,67 @@ public class Neo4j {
 	
 	/*-----------------------------------------------------------------------------
 	/*
-	/* Day 1, infect randomly 1. person
-	/* 
-	/*-----------------------------------------------------------------------------
-	 */
-	public StatisticADay day1( ) {
-		StatisticADay statisticADay = new StatisticADay();
-		
-		try (Session session = driver.session()) {
-			session.writeTransaction(tx -> {
-				tx.run( Cypher.setAllPersonsToHealthy());
-				tx.run( Cypher.removeAllRelations( relType2nd.HasInfected));
-				return 1;
-			});
-		}	
-		
-		// delete all labels (except :Person) from node:Person
-		this.deleteAllLabels2nd();
-		
-		persons = new Persons( downloadAllPersons());
-		Utils.logging( "infect randomly 1 or 2 persons");
-		try (Session session = driver.session()) {
-			session.writeTransaction(tx -> {
-				// 1. person
-				int id = persons.getPersonRandomly().getId();
-				tx.run( Cypher.infectAPerson( id, 1));
-				Utils.logging( "id " + id + " infected on day 1");
-				// 2. person
-				id = persons.getPersonRandomly().getId();
-				tx.run( Cypher.infectAPerson( id, 1));
-				Utils.logging( "id " + id + " infected on day 1");
-				return 1;
-			});
-		}
-				
-		this.deleteAllLabels2nd();
-		this.setAllLabels2nd( 1);
-		
-		try (Session session = driver.session()) {
-			session.writeTransaction(tx -> {				
-				this.printStatusPersons( 1, tx);
-				statisticADay.setNumbPersonsHealthy( this.getNumbPersonsHealthy( 1, tx));
-				statisticADay.setNumbPersonsInIncubation( this.getNumbPersonsInIncubation( 1, tx));
-				statisticADay.setNumbPersonsIll( this.getNumbPersonsIll( 1, tx));
-				statisticADay.setNumbPersonsImmune( this.getNumbPersonsImmune( 1, tx));
-				return 1;
-			});
-		}
-		return statisticADay;
-	}
-	
-	
-	/*-----------------------------------------------------------------------------
-	/*
 	/* calculate the spreading of the virus on day day
 	 * and returns the number of persons, who are in incubation period
 	 */
 	/* 
 	/*-----------------------------------------------------------------------------
 	 */
-	public StatisticADay day( int day) {
+	public void day( int day, HashMap<Integer, StatisticADay> statistics) {
 		StatisticADay statisticADay = new StatisticADay();
+		
+		if( day == 1) {
+			try (Session session = driver.session()) {
+				session.writeTransaction(tx -> {
+					tx.run( Cypher.setAllPersonsToHealthy());
+					tx.run( Cypher.removeAllRelations( relType2nd.HasInfected));
+					return 1;
+				});
+			}	
+			
+			persons = new Persons( downloadAllPersons());
+			Utils.logging( "infect randomly 1 or 2 persons");
+			try (Session session = driver.session()) {
+				session.writeTransaction(tx -> {
+					this.deleteAllLabels2nd( tx);
+					
+					// 1. person
+					int id = persons.getPersonRandomly().getId();
+					tx.run( Cypher.infectAPerson( id, 1));
+					Utils.logging( "id " + id + " infected on day 1");
+					// 2. person
+					id = persons.getPersonRandomly().getId();
+					tx.run( Cypher.infectAPerson( id, 1));
+					Utils.logging( "id " + id + " infected on day 1");
+					return 1;
+				});
+			}
+			
+		}
+		else {
+			try (Session session = driver.session()) {
+				session.writeTransaction(tx -> {		
+					tx.run( Cypher.infectPersons( day));	
+					return 1;
+				});
+			}
+		}
+		
+		
 		try (Session session = driver.session()) {
-			session.writeTransaction(tx -> {
-				
-				tx.run( Cypher.infectPersons( day));
-				this.printStatusPersons( day, tx);
-				
+			session.writeTransaction(tx -> {		
+				this.deleteAllLabels2nd( tx);
+				this.setAllLabels2nd( day, tx);
+
 				statisticADay.setNumbPersonsHealthy( this.getNumbPersonsHealthy( day, tx));
 				statisticADay.setNumbPersonsInIncubation( this.getNumbPersonsInIncubation( day, tx));
 				statisticADay.setNumbPersonsIll( this.getNumbPersonsIll( day, tx));
 				statisticADay.setNumbPersonsImmune( this.getNumbPersonsImmune( day, tx));
-				
 				return 1;
 			});
 		}
 		
-		this.deleteAllLabels2nd();
-		this.setAllLabels2nd( day);
-		
-		return statisticADay;	
+		statistics.put( day, statisticADay);	
 	}
 
 
@@ -330,30 +312,21 @@ public class Neo4j {
 	/* 
 	/*-----------------------------------------------------------------------------
 	 */
-	private void deleteAllLabels2nd() {
-		try (Session session = driver.session()) {
-			session.writeTransaction(tx -> {
-				for( labelName2nd n : labelName2nd.values()) {
-					String cypher = 
-						"MATCH (p:" + Neo4j.labelName.Person + ") " +
-						"REMOVE p:" + n.toString();
-					tx.run( cypher);
-				}
-				return 1;
-			});
+	private void deleteAllLabels2nd( Transaction tx) {
+		for( labelName2nd n : labelName2nd.values()) {
+			String cypher = 
+				"MATCH (p:" + Neo4j.labelName.Person + ") " +
+				"REMOVE p:" + n.toString();
+			tx.run( cypher);
 		}
+
 	}
-	private void setAllLabels2nd( int day) {
-		try (Session session = driver.session()) {
-			session.writeTransaction(tx -> {
-				// set labels to healthy, inIncubation, ill, immune: depending on status of :Person
-				tx.run( Cypher.setLabelHealthy( day));
-				tx.run( Cypher.setLabelInIncubation( day));
-				tx.run( Cypher.setLabelIll( day));
-				tx.run( Cypher.setLabelImmune( day));
-				return 1;
-			});
-		}
+	private void setAllLabels2nd( int day, Transaction tx) {
+		// set labels to healthy, inIncubation, ill, immune: depending on status of :Person
+		tx.run( Cypher.setLabelHealthy( day));
+		tx.run( Cypher.setLabelInIncubation( day));
+		tx.run( Cypher.setLabelIll( day));
+		tx.run( Cypher.setLabelImmune( day));
 	}
 	
 	
@@ -479,6 +452,32 @@ public class Neo4j {
 		return persons;
 	}
 	
+	// return HashMap<id, status> of all persons, who have a new stati
+	public Vector<Integer> getIdsFromPersonsWithNewStatus( Person.status status, int day) {
+		Vector<Integer> newStatusVector = new Vector<Integer>();
+		
+		try(Session session = driver.session()) {
+			return session.readTransaction(tx -> {
+				
+				String cypherQ = "";
+				if( status == Person.status.healthy) cypherQ = Cypher.newPersonsHealthy( day);
+				else if( status == Person.status.inIncubation) cypherQ =  Cypher.newPersonsInIncubation( day);
+				else if( status == Person.status.ill) cypherQ =  Cypher.newPersonsIll( day);
+				else if( status == Person.status.immune) cypherQ =  Cypher.newPersonsImmune( day);
+				Result result = tx.run( cypherQ);
+				
+				while( result.hasNext()) {
+					Record record = result.next();
+					int id = record.get( "id").asInt();
+					newStatusVector.add( id);
+				}
+//				Utils.logging( cypherQ);
+//				Utils.logging( newStatusVector.size());
+				return newStatusVector;
+			});
+		}
+	}
+	
 	
 	
 	
@@ -558,11 +557,18 @@ public class Neo4j {
 	}
 
 	
-	private void printStatusPersons( int day, Transaction tx) {
-		Utils.logging( String.format( 
-			"day %3d, healthy=, %6d, incubation=, %6d, ill=, %6d, immune=, %6d",
-				day, this.getNumbPersonsHealthy( day, tx), this.getNumbPersonsInIncubation( day, tx),
-				this.getNumbPersonsIll( day, tx), this.getNumbPersonsImmune( day, tx)));
+	public void printStatusPersons( int day, StatisticADay statisticADay) {
+		Utils.logging( getStatusPersons( day, statisticADay));
+	}
+	public static String getStatusPersons( int day, StatisticADay statisticADay) {
+		return String.format( 
+			"day=%d healthy=%d incubation=%d(%d) ill=%d(%d) immune=%d(%d) R'=%.2f",
+				day, 
+				statisticADay.getNumbPersonsHealthy(), 
+				statisticADay.getNumbPersonsInIncubation(), statisticADay.getNewNumbPersonsInIncubation(),
+				statisticADay.getNumbPersonsIll(), statisticADay.getNewNumbPersonsIll(),
+				statisticADay.getNumbPersonsImmune(), statisticADay.getNewNumbPersonsImmune(),
+				statisticADay.getR());
 	}
 		
 	
@@ -592,7 +598,7 @@ public class Neo4j {
 		for( String attributeName : new String[] {Neo4j.fieldName.dayOfInfection.toString(),
 			Neo4j.fieldName.incubationPeriod.toString()}) {
 				try (Session session = driver.session()) {
-					session.run( Cypher.createIndex(attributeName));
+					session.run( Cypher.createIndex( attributeName));
 					Utils.logging( "Index Person." + attributeName + " created");
 				} catch(Exception e) {
 					Utils.logging( "Index Person." + attributeName + " already exists");

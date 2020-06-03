@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Random;
 
 
@@ -52,7 +53,7 @@ public abstract class Utils {
 	 */
 	public static void logging( Object o) {
 	    DateFormat formatter = new SimpleDateFormat( "dd.MM.,HH:mm:ss");
-	    String s = String.format( "%s,%s, %.3f,ms, %s,", 
+	    String s = String.format( "%s,%s, %.3f,sec, %s,", 
 	    	Parameter.versionNr, formatter.format(new Date()), mainTimer.elapsedTime()/1000.0, o.toString());
 	    if( o.toString().startsWith( "****")) s = "\n" + s;
 	    System.out.println( s);

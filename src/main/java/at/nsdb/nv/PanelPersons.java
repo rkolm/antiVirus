@@ -5,6 +5,7 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.util.HashMap;
+import java.util.Vector;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -12,11 +13,18 @@ import javax.swing.JPanel;
 public class PanelPersons extends JFrame {
 	private static final long serialVersionUID = 1L;
 	private static PanelPersons instance = null;
-	// max/min locations (longitude, latitude) of persons
-	int minLong=Integer.MAX_VALUE, maxLong=0, minLat=Integer.MAX_VALUE, maxLat=0;
-	private int day;
-	private Persons persons;
-	final int panelWidth = 362, panelHeight = 362;
+	private Neo4j neo4j;
+	
+	// Vectors with id's of all persons with new status
+	Vector<Integer> newInIncubation, newIll, newImmune; 
+
+	// save a PaintType (xPos, yPos, status) Variable for each user
+	private static HashMap<Integer, PaintType> paintTypeMap;
+	int day;
+	HashMap<Integer, StatisticADay> statistics;
+	
+	final static int panelWidth = 1200, panelHeight = 600;
+	
 	
 	final JPanel jpanel = new JPanel() {
 		private static final long serialVersionUID = 1L;
@@ -28,65 +36,100 @@ public class PanelPersons extends JFrame {
 	};
 
 
-	private PanelPersons( ) {		
+	private PanelPersons( Neo4j neo4j){
+		this.neo4j = neo4j;
+		
+		// initialize xPos, yPos, status for each user 
+		setLongLatToMap();
+		
 		setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE);		
 		this.setVisible( true);
 		this.getContentPane().add( jpanel);
 		this.getContentPane().setBackground( Color.white);
 		this.setBackground( Color.white);
+		 		
 		this.repaint();				
 		setSize(new Dimension( panelWidth, panelHeight));
 	}
 
-	public static PanelPersons getInstance() {
+	public static PanelPersons getInstance( Neo4j neo4j) {
 		if (instance == null) {
-			instance = new PanelPersons();
+			instance = new PanelPersons( neo4j);
 		}
 		return instance;		
+	}
+	
+	// initialize xPos, yPos, status for each user 
+	private void setLongLatToMap() {
+		Persons persons = neo4j.getAllPersons();
+		paintTypeMap = new HashMap<Integer, PaintType>();
+		for( Person p: persons.getAllPersons()) {
+			paintTypeMap.put( p.getId(),  new PaintType(
+				(int) ((double) (p.getLongitude() - persons.getMinLongitude()) / 
+					( persons.getMaxLongitude()-persons.getMinLongitude()) * (panelWidth*0.7-2) + 1.0), 
+				(int) ((double) (p.getLatitude() - persons.getMinLatitude()) / 
+					( persons.getMaxLatitude()-persons.getMinLatitude()) * (panelHeight-2) + 1.0),
+				Person.status.healthy));	
+		}
 	}
 
 	private void paintPersons(Graphics g) {
 		Graphics2D g2 = (Graphics2D) g;
 
-		if (persons == null) {
-			return;
-		}
+		if (paintTypeMap == null) return;
+		
+		// print all stati of all persons
+		paintTypeMap.forEach( (id, paintType) -> {
+			if( paintType.getStatus() == Person.status.inIncubation) g2.setColor( Color.red);
+			else if( paintType.getStatus() == Person.status.ill) g2.setColor( Color.black);
+			else if( paintType.getStatus() == Person.status.immune) g2.setColor( Color.green);
+			else g2.setColor( Color.yellow);
+			g2.drawRect( paintType.getXPos(), paintType.getYPos(), 1, 1);
+		});
+		
+		
+		statistics.forEach( (day, statisticADay) -> {
+			if( (day >= 10) && (Math.floorMod( day, 2) == 0)) {
+				g2.setColor( Color.black);
+				g2.drawString( String.format( "%d.%5.1f%% R=%.2f", 
+						day, 
+						100.0 * statisticADay.getNumbPersonsInIncubationAndIll() / statisticADay.getNumPersonsAll(), 
+						statisticADay.getR()), 
+					(int)(panelWidth * 0.71), (day-9) * 6 + 12);
 				
-		for( Person p : persons.getAllPersons()) {					
-			g2.setColor(Color.white);
-			if( p.getStatus( day) == Person.status.healthy) g2.setColor( Color.yellow);
-			if( p.getStatus( day) == Person.status.inIncubation) g2.setColor( Color.red);
-			if( p.getStatus( day) == Person.status.ill) g2.setColor( Color.black);
-			if( p.getStatus( day) == Person.status.immune) g2.setColor( Color.green);
-			
-			int w = (int) ((double)( p.getLongitude()-persons.getMinLongitude()) / 
-				( persons.getMaxLongitude()-persons.getMinLongitude()) * (panelWidth-2) + 1.0);
-			int h = (int) ((double) (p.getLatitude()-persons.getMinLatitude()) / 
-				( persons.getMaxLatitude()-persons.getMinLatitude()) * (panelHeight-2) + 1.0);
-			g2.drawRect( w, h, 1, 1);
-			//Utils.logging( String.format( "l=%d h=%d", w, h));
-		};
+				g2.setColor( Color.orange);
+				g2.fillRect( 
+					(int)(panelWidth * 0.795), (day-9) * 6, 
+					(int)Math.min( 0.205*panelWidth-1, (int)(statisticADay.getR() * 60)), 10);
+			}
+		});
 	}
 
-	public void paintPanelPerson(int day, HashMap<Integer, StatisticADay> statistics, Persons persons) {
-
+	public void paintPanelPerson(int day, HashMap<Integer, StatisticADay> statistics) {
 		this.day = day;
-		this.persons = persons;
+		this.statistics = statistics;
+		// get all ids with the new Status inIncubation
+		newInIncubation = neo4j.getIdsFromPersonsWithNewStatus( Person.status.inIncubation, day);
+		newInIncubation.forEach( id -> paintTypeMap.get( id).setStatus( Person.status.inIncubation));
 		
-		StatisticADay statisticADay = new StatisticADay();
-		statisticADay = statistics.get( day);
+		// get all ids with the new Status ill
+		newIll = neo4j.getIdsFromPersonsWithNewStatus( Person.status.ill, day);
+		newIll.forEach( id -> paintTypeMap.get( id).setStatus( Person.status.ill));
 		
-		// 3 panels in one row, 2 rows
-		//this.setLocation( (day % 3) * (panelWidth + 60) + 10 + Math.floorDiv( day, 30) * 20, 
-		//		(Math.floorDiv( day, 3) % 10) * 25+10);
-
-		setTitle( String.format( "d=%d    %d / %d / %d / %d", 
-			day, statisticADay.getNumbPersonsHealthy(), statisticADay.getNumbPersonsInIncubation(),
-			statisticADay.getNumbPersonsIll(), statisticADay.getNumbPersonsImmune()));
+		// get all ids with the new Status immune
+		newImmune = neo4j.getIdsFromPersonsWithNewStatus( Person.status.immune, day);
+		newImmune.forEach( id -> paintTypeMap.get( id).setStatus( Person.status.immune));
+		
+		StatisticADay statisticADay = statistics.get( day);
+		statisticADay.setNewNumbPersonsInIncubation( newInIncubation.size());
+		statisticADay.setNewNumbPersonsIll( newIll.size());
+		statisticADay.setNewNumbPersonsImmune( newImmune.size());
+		
+		setTitle( Neo4j.getStatusPersons( day, statisticADay));
+		
 		this.getContentPane().validate();		
 		this.repaint();
 	}
-
 }
 	
 	

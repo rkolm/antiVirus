@@ -14,10 +14,10 @@ public class PanelStatistics extends JFrame {
 
 	public PanelStatistics( HashMap<Integer, StatisticADay> statistics) {
 		
-		final int panelWidth = 800, panelHeight = 500;
+		final int panelWidth = 1200, panelHeight = 600;
 		setSize(new Dimension( panelWidth + 10, panelHeight + 10));
 		
-		this.setLocation( 10, 10);
+		this.setLocation( 50, 50);
 		
 		setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE);
 		this.setBackground( Color.white);
@@ -32,19 +32,30 @@ public class PanelStatistics extends JFrame {
 				Graphics2D g2 = (Graphics2D) g;
 				this.setBackground( Color.white);
 			
-				int w = (int) Math.floor( (double) panelWidth / statistics.size());
+				int w = (int) Math.floor( (double) panelWidth / statistics.size() / 1.0);
 				
 				for( int day : statistics.keySet()) {
 					int incubation = statistics.get( day).getNumbPersonsInIncubation();
 					int ill = statistics.get( day).getNumbPersonsIll();
 					int immune = statistics.get( day).getNumbPersonsImmune();
+					int all = statistics.get( day).getNumbPersonsHealthy() + incubation + ill + immune;
+					
+					int immuneHeight = (int) (((double) immune / all) * (panelHeight-20));
+					int illHeight = (int) (((double) ill / all) * (panelHeight-20));
+					int incubationHeight = (int) (((double) incubation / all) * (panelHeight-20));
+					//Utils.logging( incubationHeight + " " + illHeight + " " + immuneHeight + " " + panelHeight);
 					
 					g2.setColor(Color.red);
-					g2.fillRect( w*day + 10, panelHeight - (incubation + ill + immune) /10, (int) (w*0.8), incubation);
+					g2.fillRect( w*day + 10, panelHeight - illHeight - immuneHeight - incubationHeight - 20, 
+						(int) (w*0.8), incubationHeight);
+					
 					g2.setColor(Color.black);
-					g2.fillRect( w*day + 10, panelHeight - (ill + immune) /10, (int) (w*0.8), ill);
+					g2.fillRect( w*day + 10, panelHeight -immuneHeight - illHeight - 20,
+						(int) (w*0.8), illHeight);
+					
 					g2.setColor(Color.green);
-					g2.fillRect( w*day + 10, panelHeight - immune /10, (int) (w*0.8), immune);
+					g2.fillRect( w*day + 10, panelHeight - immuneHeight - 20,
+						(int) (w*0.8), immuneHeight);
 				}
 			}
 		};
