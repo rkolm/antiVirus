@@ -1,9 +1,12 @@
 package at.nsdb.nv;
 
+import java.awt.Button;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.HashMap;
 import java.util.Vector;
 
@@ -39,11 +42,26 @@ public class PanelPersons extends JFrame {
 	private PanelPersons( Neo4j neo4j){
 		this.neo4j = neo4j;
 		
+		
 		// initialize xPos, yPos, status for each user 
 		setLongLatToMap();
 		
 		setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE);		
 		this.setVisible( true);
+		
+		Button buttonStopGo = new Button( Parameter.running ? "break" : "continue");
+		buttonStopGo.setSize( 100, 40);
+		jpanel.add( buttonStopGo);
+        buttonStopGo.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                Parameter.running = ! Parameter.running;
+                if( Parameter.running) Utils.logging( "continuing running ...");
+                else Utils.logging( "break coming soon");
+                buttonStopGo.setLabel( Parameter.running ? "break" : "continue");
+            }
+        });
+
+		
 		this.getContentPane().add( jpanel);
 		this.getContentPane().setBackground( Color.white);
 		this.setBackground( Color.white);
