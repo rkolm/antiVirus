@@ -7,126 +7,66 @@ import at.nsdb.nv.Neo4j;
  */
 public class Cypher {
 	
-	
-	/*-----------------------------------------------------------------------------
-	/*
-	/* create constraint and index for Person.id
-	/* 
-	/*-----------------------------------------------------------------------------
-	 */	
+	/** create constraint and index for Person.id */	
 	public static String createConstraint() {
-		String cypherQ = String.format( 
-			"CREATE CONSTRAINT ON (p:%s) " +
-			"ASSERT p.%s IS UNIQUE",
-			Neo4j.labelName.Person, Neo4j.fieldName.id);
-		return cypherQ;
+		return "CREATE CONSTRAINT ON (p:"+Neo4j.labelName.Person+") " +
+			   "ASSERT p."+Neo4j.fieldName.id+" IS UNIQUE";
 	}
 	
 	
-	
-	
-	/*-----------------------------------------------------------------------------
-	/*
-	/* manipulates biometrics attributes of the nodes (persons)
-	/* 
-	/*-----------------------------------------------------------------------------
-	 */	
-	// remove biometrics attributes from All nodes
-	public static String removeBiometricsAttributesFromAllPersons() {
-		String cypherQ = String.format( 
-			"Match( p:%s) " +
-			"REMOVE p.%s, p.%s, p.%s",
-			Neo4j.labelName.Person,
-			Neo4j.fieldName.illnessPeriod, Neo4j.fieldName.incubationPeriod,
-				Neo4j.fieldName.dayOfInfection);
-		return cypherQ;
+	/** remove biometric attributes from all nodes */
+	public static String removeBiometricAttributesFromAllPersons() {
+		return "MATCH( p:"+Neo4j.labelName.Person+") " +
+			   "REMOVE p."+Neo4j.fieldName.illnessPeriod+", " +
+					  "p."+Neo4j.fieldName.incubationPeriod+", " +
+					  "p."+Neo4j.fieldName.dayOfInfection;
 	}
 	
-	// add biometrics attributes to Persons
-	public static String addBiometricsAttributesToPersons() {
-		String cypherQ = String.format( 
-			"Match( p:%s) " +
-			"Set p.%s = 0, p.%s = 0, p.%s = 0",
-			Neo4j.labelName.Person, Neo4j.fieldName.illnessPeriod, Neo4j.fieldName.incubationPeriod,
-			Neo4j.fieldName.dayOfInfection);
-		return cypherQ;
+	/** add biometric attributes to all persons */ 
+	public static String addBiometricAttributesToAllPersons() {
+		return "MATCH( p:"+Neo4j.labelName.Person+") " +
+			   "SET p."+Neo4j.fieldName.illnessPeriod+" = 0," +
+				  " p."+Neo4j.fieldName.incubationPeriod+" = 0," +
+				  " p."+Neo4j.fieldName.dayOfInfection+" = 0";
 	}
 	
-	// initialize biometrics attributes
-	public static String setBiometrics( int id, int incubationPeriod, int illnessPeriod) {
-		String cypherQ = String.format( 
-			"Match( n:%s { id:%d}) " +
-			"Set n.%s=%d, n.%s=%d, n.%s=%d",
-			Neo4j.labelName.Person, id,
-			Neo4j.fieldName.dayOfInfection, 0,
-			Neo4j.fieldName.incubationPeriod, incubationPeriod,
-			Neo4j.fieldName.illnessPeriod, illnessPeriod);
-		return cypherQ;
-	}
 	
 	// set all persons to healthy (set dayOfInfection = 0)
 	public static String setAllPersonsToHealthy() {
-		String cypherQ = String.format( 
-			"Match( n:%s ) " +
-			"Set n.%s=0",
-			Neo4j.labelName.Person, Neo4j.fieldName.dayOfInfection);
-		return cypherQ;
+		return "MATCH( n:"+Neo4j.labelName.Person+" ) " +
+			   "SET n."+Neo4j.fieldName.dayOfInfection+"=0";
 	}
 	
 	// infect a person
-	public static String infectAPerson( int id, int day) {
-		String cypherQ = String.format( 
-			"Match( n:%s { id:%d}) " +
-			"Set n.%s=%d",
-			Neo4j.labelName.Person, id,	Neo4j.fieldName.dayOfInfection, day);
-		return cypherQ;
+	public static String infectAPerson() {
+		return "MATCH( n:"+Neo4j.labelName.Person+") " +
+			   "WHERE n.id = $id " +
+			   "SET n."+Neo4j.fieldName.dayOfInfection+"= $day";
 	}
 	
-	/*-----------------------------------------------------------------------------
-	/*
-	/* index for Person-attribute
-	/* 
-	/*-----------------------------------------------------------------------------
-	 */	
-	public static String createIndex( String attribute) {
-		String cypherQ = String.format( 
-			"CREATE INDEX idx_%s" +
-			" FOR (p:%s)" +
-			"  ON (p.%s) ",
-			attribute, Neo4j.labelName.Person, attribute);
-		return cypherQ;
+	/** index for Person-attribute */	
+	public static String createIndex(String attribute) {
+		return "CREATE INDEX idx_"+attribute+"" +
+			   " FOR (p:"+Neo4j.labelName.Person+")" +
+			   "  ON (p."+attribute+") ";
 	}
 	
 		
-	/*-----------------------------------------------------------------------------
-	/*
-	/* download persons (nodes)
-	/* 
-	/*-----------------------------------------------------------------------------
-	 */	
-	// download all persons 
+	/** get all persons */
 	public static String getAllPersons() {
-		String cypherQ = String.format(
-			"MATCH (p:%s) " +
-			"RETURN p",
-			Neo4j.labelName.Person);
-		return cypherQ;
+		return "MATCH (p:"+Neo4j.labelName.Person+") " +
+				"RETURN p";
 	}
 	
-	// download all persons in incubation period. only persons in incubation period can infect
-	public static String getAllPersonsInIncubation( int day) {
-		String cypherQ = String.format(	
-			"MATCH (p:%s) " + 
-			"WHERE (p.%s > 0) AND (p.%s <= %d) AND (%d <= p.%s + p.%s)" +
-			"RETURN p", 
-			Neo4j.labelName.Person, Neo4j.fieldName.dayOfInfection, 
-			Neo4j.fieldName.dayOfInfection, day,
-			day, Neo4j.fieldName.dayOfInfection, Neo4j.fieldName.incubationPeriod);
-		return cypherQ;
+	/** download all persons in incubation period. only persons in incubation period can infect */
+	public static String getAllPersonsInIncubation() {
+		return
+			"MATCH (p:"+Neo4j.labelName.Person+") " + 
+			"WHERE (p."+Neo4j.fieldName.dayOfInfection+" > 0) " +
+			 " AND (p."+Neo4j.fieldName.dayOfInfection+" <= $day) " +
+			 " AND ($day <= p."+Neo4j.fieldName.dayOfInfection+" + p."+Neo4j.fieldName.incubationPeriod+")" +
+			"RETURN p";
 	}
-	
-	
-	
 	
 	/*-----------------------------------------------------------------------------
 	/*
@@ -134,39 +74,32 @@ public class Cypher {
 	/* 
 	/*-----------------------------------------------------------------------------
 	 */	
-	// ids of persons, who are healthy
-	public static String newPersonsHealthy( int day) {
-			String cypherQ = 
-				"MATCH (p:" + Neo4j.labelName2nd.Healthy.toString() + ") " +
+	/** ids of persons, who are healthy */
+	public static String newPersonsHealthy() {
+		return 	"MATCH (p:" + Neo4j.labelName2nd.Healthy + ") " +
 				"RETURN p." + Neo4j.fieldName.id + " as id";
-		return cypherQ;
 	}
-	// ids of persons, who are new in incubation period
-	public static String newPersonsInIncubation( int day) {
-			String cypherQ = 
-				"MATCH (p:" + Neo4j.labelName2nd.InIncubation.toString() + ") " +
-				"WHERE p." + Neo4j.fieldName.dayOfInfection.toString() + " = " + day + " " +
+	/** ids of persons, who are new in incubation period */
+	public static String newPersonsInIncubation() {
+		return	"MATCH (p:" + Neo4j.labelName2nd.InIncubation + ") " +
+				"WHERE p." + Neo4j.fieldName.dayOfInfection + " = $day " +
 				"RETURN p." + Neo4j.fieldName.id + " as id";
-		return cypherQ;
 	}
-	// ids of persons, who are new in ill period
-	public static String newPersonsIll( int day) {
-			String cypherQ = 
+	/** ids of persons, who are new in ill period */
+	public static String newPersonsIll() {
+			return
 				"MATCH (p:" + Neo4j.labelName2nd.Ill.toString() + ") " +
 				"WHERE p." + Neo4j.fieldName.dayOfInfection.toString() + 
-					" + p." + Neo4j.fieldName.incubationPeriod.toString() + " + 1 = " + day + " " +
+					" + p." + Neo4j.fieldName.incubationPeriod.toString() + " + 1 = $day " +
 				"RETURN p." + Neo4j.fieldName.id + " as id";
-		return cypherQ;
 	}
-	// ids of persons, who are new of immune (after illness) persons
-	public static String newPersonsImmune( int day) {
-			String cypherQ = 
-				"MATCH (p:" + Neo4j.labelName2nd.Immune.toString() + ") " +
+	/** ids of persons, who are new of immune (after illness) persons */
+	public static String newPersonsImmune() {
+		return "MATCH (p:" + Neo4j.labelName2nd.Immune.toString() + ") " +
 				"WHERE p." + Neo4j.fieldName.dayOfInfection.toString() + 
 					" + p." + Neo4j.fieldName.incubationPeriod.toString() +
-					" + p." + Neo4j.fieldName.illnessPeriod.toString() + " + 1 = " + day + " " +
+					" + p." + Neo4j.fieldName.illnessPeriod.toString() + " + 1 = $day " +
 				"RETURN p." + Neo4j.fieldName.id + " as id";
-		return cypherQ;
 	}
 	
 	
@@ -178,20 +111,17 @@ public class Cypher {
 	/* 
 	/*-----------------------------------------------------------------------------
 	 */	
-	// download all relations (canInfect) 
+	/** download all relations (canInfect) */
 	public static String getAllCanInfect() {
-		String cypherQ = String.format(
-			"MATCH (p:%s)-[c:%s]->(q:%s) " +
-			"RETURN p, c, q", 
-			Neo4j.labelName.Person, Neo4j.relType.CanInfect, Neo4j.labelName.Person);
-		return cypherQ;
+		return
+			"MATCH (p:"+Neo4j.labelName.Person+")-[c:"+Neo4j.relType.CanInfect+"]->(q:"+Neo4j.labelName.Person+") " +
+			"RETURN p, c, q";
 	}
 	
 	
-	// get id2 and distance from all persons who can be infected
+	/** get id2 and distance from all persons who can be infected */
 	public static String infectPersons() {
-		String cypherQ = String.format(
-				"MATCH (p:"+Neo4j.labelName.Person+")-[c:"+Neo4j.relType.CanInfect+"]->(q:"+Neo4j.labelName.Person+") " +
+		return "MATCH (p:"+Neo4j.labelName.Person+")-[c:"+Neo4j.relType.CanInfect+"]->(q:"+Neo4j.labelName.Person+") " +
 				"WHERE (q."+Neo4j.fieldName.dayOfInfection+" = 0) " +
 				"  AND (p."+Neo4j.fieldName.dayOfInfection+" > 0) " +
 				"  AND (p."+Neo4j.fieldName.dayOfInfection+" <= $day) " +
@@ -200,35 +130,24 @@ public class Cypher {
 				"WHERE ((r < 0.01) OR (r < $quote * 1000.0 * 100.0 / dist / dist)) " +
 				"set q."+Neo4j.fieldName.dayOfInfection+" = $day " +
 				"CREATE (p)-[:" + Neo4j.relTypeVar.HasInfected + 
-					" {" + Neo4j.relAttribute.day + ":$day}]->(q)");
-		return cypherQ;
+					" {" + Neo4j.relAttribute.day + ":$day}]->(q)";
 	}
-	
-	
 	
 	
 	/**
 	 * CypherQuery to remove all variable relations between 2 persons
 	 */	
 	public static String removeAllRelations( Neo4j.relTypeVar relType) {
-		String cypherQ = String.format( "Match ()-[m:%s]->() delete m",
-			relType);
-		return cypherQ;
+		return "MATCH ()-[m:"+relType+"]->() DELETE m";
 	}
 	
 	/**
 	 * CypherQuery create a canInfect- relation between 2 persons
 	 */
 	public static String createCanInfect( int id1, int id2, int distance) {
-		String cypherQ = String.format(
-				"MATCH (p:%s {id: %d}), (q:%s {id: %d}) " +
-				"CREATE (p)-[:%s {distance:%d}]->(q)", 
-				Neo4j.labelName.Person, id1, Neo4j.labelName.Person, id2,
-				Neo4j.relType.CanInfect, distance);
-		return cypherQ;
+		return	"MATCH (p:"+Neo4j.labelName.Person+" {id:"+id1+"}), (q:"+Neo4j.labelName.Person+" {id:"+id2+"}) " +
+				"CREATE (p)-[:"+Neo4j.relType.CanInfect+" {distance:"+distance+"}]->(q)";
 	}
-
-		
 	
 	
 	
@@ -240,61 +159,45 @@ public class Cypher {
 	 */	
 	// number of persons over all in neo4J
 	public static String numbPersons() {
-		String cypherQ = String.format(
-			"MATCH (n:%s) " +
-			"RETURN count(n) as count", 
-			Neo4j.labelName.Person);
-		return cypherQ;
+		return	"MATCH (n:"+Neo4j.labelName.Person+") " +
+				"RETURN count(n) as count";
 	}
 	
 	// number of persons who are healthy
 	public static String numbPersonsHealthy( int day) {
-		String cypherQ = 
-			"MATCH (p:" + Neo4j.labelName2nd.Healthy.toString() + ") " +
-			"RETURN count( p) as count";
-		return cypherQ;
+		return	"MATCH (p:" + Neo4j.labelName2nd.Healthy + ") " +
+				"RETURN count( p) as count";
 	}
 	
 	// number of persons in incubation period
-	public static String numbPersonsInIncubation( int day) {
-			String cypherQ = 
-				"MATCH (p:" + Neo4j.labelName2nd.InIncubation.toString() + ") " +
+	public static String numbPersonsInIncubation() {
+		return	"MATCH (p:" + Neo4j.labelName2nd.InIncubation + ") " +
 				"RETURN count( p) as count";
-		return cypherQ;
 	}
 	
 	// number of persons who are ill
-	public static String numbPersonsIll( int day) {
-			String cypherQ = 
-				"MATCH (p:" + Neo4j.labelName2nd.Ill.toString() + ") " +
+	public static String numbPersonsIll() {
+		return	"MATCH (p:" + Neo4j.labelName2nd.Ill + ") " +
 				"RETURN count( p) as count";
-		return cypherQ;
 	}
 	
 	// number of immune (after illness) persons
-	public static String numbPersonsImmune( int day) {
-			String cypherQ = 
-				"MATCH (p:" + Neo4j.labelName2nd.Immune.toString() + ") " +
+	public static String numbPersonsImmune() {
+		return	"MATCH (p:" + Neo4j.labelName2nd.Immune + ") " +
 				"RETURN count( p) as count";
-		return cypherQ;
 	}
 	
 	// number of immune (after illness) persons
 	public static String numbPersonsWithAttribute( String attributeName) {
-		String cypherQ =
-			"MATCH (p:" + Neo4j.labelName.Person + " ) " +
-			"WHERE EXISTS( p." + attributeName + ") " +
-			"RETURN count( p) as count";
-		return cypherQ;
+		return "MATCH (p:" + Neo4j.labelName.Person + " ) " +
+				"WHERE EXISTS( p." + attributeName + ") " +
+				"RETURN count( p) as count";
 	}
 	
 	// number of relations (canInfect)
 	public static String numbCanInfects() {
-		String cypherQ = String.format( 
-			"MATCH ()-[r:%s]->() " +
-			"RETURN count(r) as count",
-			Neo4j.relType.CanInfect);
-		return cypherQ;
+		return "MATCH ()-[r:"+Neo4j.relType.CanInfect+"]->() " +
+				"RETURN count(r) as count";
 	}
 	
 	

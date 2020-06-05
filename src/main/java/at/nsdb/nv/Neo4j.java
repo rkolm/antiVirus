@@ -7,6 +7,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Vector;
 
 import org.neo4j.driver.AuthTokens;
@@ -137,11 +138,11 @@ public class Neo4j {
 			try (Session session = driver.session()) {
 				session.writeTransaction(tx -> {
 					if( withDayOfInfection > 0 || withIncubationPeriod > 0 || withIllnessPeriod > 0) {
-						tx.run(Cypher.removeBiometricsAttributesFromAllPersons());
+						tx.run(Cypher.removeBiometricAttributesFromAllPersons());
 						Utils.logging("all biometric attributes deleted");
 					}
 	
-					tx.run(Cypher.addBiometricsAttributesToPersons());
+					tx.run(Cypher.addBiometricAttributesToAllPersons());
 					Utils.logging("biometric attributes e.g. incubation period to :person added");
 					
 					return 1;
@@ -272,11 +273,13 @@ public class Neo4j {
 					
 					// 1. person
 					int id = persons.getPersonRandomly().getId();
-					tx.run( Cypher.infectAPerson( id, 1));
+					var params = new HashMap<String, Object>(Map.of("id", id, "day", day));
+					tx.run(Cypher.infectAPerson(), params);
 					Utils.logging( "id " + id + " infected on day 1");
+
 					// 2. person
 					id = persons.getPersonRandomly().getId();
-					tx.run( Cypher.infectAPerson( id, 1));
+					tx.run(Cypher.infectAPerson(), params);
 					Utils.logging( "id " + id + " infected on day 1");
 					return 1;
 				});
@@ -303,9 +306,9 @@ public class Neo4j {
 				this.setAllLabels2nd( day, tx);
 
 				statisticADay.setNumbPersonsHealthy( this.getNumbPersonsHealthy( day, tx));
-				statisticADay.setNumbPersonsInIncubation( this.getNumbPersonsInIncubation( day, tx));
-				statisticADay.setNumbPersonsIll( this.getNumbPersonsIll( day, tx));
-				statisticADay.setNumbPersonsImmune( this.getNumbPersonsImmune( day, tx));
+				statisticADay.setNumbPersonsInIncubation( this.getNumbPersonsInIncubation(tx));
+				statisticADay.setNumbPersonsIll( this.getNumbPersonsIll(tx));
+				statisticADay.setNumbPersonsImmune( this.getNumbPersonsImmune(tx));
 				return 1;
 			});
 		}
@@ -355,8 +358,7 @@ public class Neo4j {
 	 */
 	// how many :Persons (nodes) in the database?
 	private int getNumbPersons( Transaction tx) {
-		String cypherQ = Cypher.numbPersons();
-		return getCount( cypherQ, tx);
+		return getCount( Cypher.numbPersons(), tx);
 	}
 	private int getNumbPersons() {	
 		try( Session session = driver.session()) {
@@ -368,26 +370,22 @@ public class Neo4j {
 	
 	// how many :Persons healthy?
 	private int getNumbPersonsHealthy( int day, Transaction tx) {
-		String cypherQ = Cypher.numbPersonsHealthy( day);
-		return getCount( cypherQ, tx);
+		return getCount( Cypher.numbPersonsHealthy( day), tx);
 	}
 	
 	// how many :Persons inIncubation period?
-	private int getNumbPersonsInIncubation( int day, Transaction tx) {
-		String cypherQ = Cypher.numbPersonsInIncubation( day);
-		return getCount( cypherQ, tx);
+	private int getNumbPersonsInIncubation(Transaction tx) {
+		return getCount( Cypher.numbPersonsInIncubation(), tx);
 	}
 	
 	// how many :Persons are ill
-	private int getNumbPersonsIll( int day, Transaction tx) {		
-		String cypherQ = Cypher.numbPersonsIll( day);
-		return getCount( cypherQ, tx);
+	private int getNumbPersonsIll(Transaction tx) {		
+		return getCount( Cypher.numbPersonsIll(), tx);
 	}
 	
 	// how many :Persons are immune
-	private int getNumbPersonsImmune( int day, Transaction tx) {		
-		String cypherQ = Cypher.numbPersonsImmune( day);
-		return getCount( cypherQ, tx);
+	private int getNumbPersonsImmune(Transaction tx) {		
+		return getCount( Cypher.numbPersonsImmune(), tx);
 	}
 	
 	// how many :Persons with attribute attributeName
@@ -473,11 +471,11 @@ public class Neo4j {
 			return session.readTransaction(tx -> {
 				
 				String cypherQ = "";
-				if( status == Person.status.healthy) cypherQ = Cypher.newPersonsHealthy( day);
-				else if( status == Person.status.inIncubation) cypherQ =  Cypher.newPersonsInIncubation( day);
-				else if( status == Person.status.ill) cypherQ =  Cypher.newPersonsIll( day);
-				else if( status == Person.status.immune) cypherQ =  Cypher.newPersonsImmune( day);
-				Result result = tx.run( cypherQ);
+				if( status == Person.status.healthy) cypherQ = Cypher.newPersonsHealthy();
+				else if( status == Person.status.inIncubation) cypherQ =  Cypher.newPersonsInIncubation();
+				else if( status == Person.status.ill) cypherQ =  Cypher.newPersonsIll();
+				else if( status == Person.status.immune) cypherQ =  Cypher.newPersonsImmune();				
+				Result result = tx.run( cypherQ, new HashMap<String, Object>(Map.of("day", day)));
 				
 				while( result.hasNext()) {
 					Record record = result.next();
