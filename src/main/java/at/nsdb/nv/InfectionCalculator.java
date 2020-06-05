@@ -5,12 +5,6 @@ import at.nsdb.nv.utils.Utils;
 public abstract class InfectionCalculator {
 	
 	/*--------------------
-	 * Programstop after day
-	 */
-	public static final int stopAfterDay = 365; // best value 365
-	public static boolean running = true;
-	
-	/*--------------------
 	 * VersionsNr
 	 */
 	public static final String versionNr = "v1.4";

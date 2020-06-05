@@ -59,7 +59,7 @@ public class Main  extends JFrame {
 			if( day == 1) Utils.logging( "---- Day 1 finished");
 			else neo4j.printStatusPersons( day, statistics.get( day));
 			
-			while( ! InfectionCalculator.running) Utils.sleepInSec( 1);
+			while( ! Config.running) Utils.sleepInSec( 1);
 						
 		//} while( day <= Parameter.stopAfterDay && statistics.get( day).getNumbPersonsInIncubation() > 0);
 		} while( day <= Config.getStopAfterDay() && statistics.get( day).getNumbPersonsInIncubation() > 0);

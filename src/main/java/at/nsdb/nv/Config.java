@@ -14,6 +14,7 @@ public final class Config {
 
     private static Config instance = null;
     private final Properties props = new Properties();
+	public static boolean running = true;
 	/*--------------------
 	 * VersionsNr
 	 */

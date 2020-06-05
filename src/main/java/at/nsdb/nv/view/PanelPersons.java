@@ -13,7 +13,7 @@ import java.util.Vector;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import at.nsdb.nv.InfectionCalculator;
+import at.nsdb.nv.Config;
 import at.nsdb.nv.Neo4j;
 import at.nsdb.nv.model.Person;
 import at.nsdb.nv.model.Persons;
@@ -56,15 +56,15 @@ public class PanelPersons extends JFrame {
 		setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE);		
 		this.setVisible( true);
 		
-		Button buttonStopGo = new Button( InfectionCalculator.running ? "break" : "continue");
+		Button buttonStopGo = new Button( Config.running ? "break" : "continue");
 		buttonStopGo.setSize( 100, 40);
 		jpanel.add( buttonStopGo);
         buttonStopGo.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                InfectionCalculator.running = ! InfectionCalculator.running;
-                if( InfectionCalculator.running) Utils.logging( "continuing running ...");
+                Config.running = ! Config.running;
+                if( Config.running) Utils.logging( "continuing running ...");
                 else Utils.logging( "break coming soon");
-                buttonStopGo.setLabel( InfectionCalculator.running ? "break" : "continue");
+                buttonStopGo.setLabel( Config.running ? "break" : "continue");
             }
         });
 
