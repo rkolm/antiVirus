@@ -1,4 +1,4 @@
-package at.nsdb.nv;
+package at.nsdb.nv.view;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -8,6 +8,8 @@ import java.util.HashMap;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+
+import at.nsdb.nv.model.StatisticADay;
 
 public class PanelStatistics extends JFrame {
 	private static final long serialVersionUID = 1L;

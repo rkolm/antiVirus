@@ -1,44 +1,56 @@
-package at.nsdb.nv;
+package at.nsdb.nv.model;
+
+import at.nsdb.nv.InfectionCalculator;
 
 public class Person {
 	
-	/*--------------------
+	/**--------------------
 	 * status of a Person. strictly order in time: healthy, inIncubation, ill, immune
 	 * healthy means never infected. After illness person becomes immune (not status healthy)
 	 */	
 	public static enum status { healthy, inIncubation, ill, immune }
-	
-		
-	
-	
-	/*--------------------
-	 * attributes of the class
-	 */	
-	// from import file
-	private int id, longitude, latitude, age;
+	/** 
+	 * unique identifier */
+	private int id;
+	/** 
+	 * geo-spatial data */
+	private int longitude, latitude; 
+	/** 
+	 * age */
+	private int age;
+	/** 
+	 * first name */
 	private String firstName;
+	/** 
+	 * day when person gets infected (the difference from day 0) */
+	private int dayOfInfection; 
+	/** 
+	 * number of days indicating how long the person is in incubation<p/>
+	 * the value is calculated during program-initialization */
+	private int incubationPeriod;
+	/** 
+	 * number of days indicates how long the person is ill<p/> 
+	 * the value is calculated during program-initialization */
+	private int illnessPeriod;
 	
-	// from import file or optional created by this software
-	private int dayOfInfection, incubationPeriod, illnessPeriod;
 	
 	
 	
-	
-	/*--------------------
+	/**--------------------
 	 * set the biometric data of a person
 	 * inkubationPeriod between 1 and 14 days, normal distribution of Gauss( 7, 2)
 	 * illnessPeriod between 1 and 17 days, normal distribution of Gauss( 9, 2)
 	 */	
 	public void setBiometrics() {
 		dayOfInfection = 0;
-		incubationPeriod = Parameter.calculateRandomlyIncubationPeriod();
-		illnessPeriod = Parameter.calculateRandomlyIllnessPeriod();
+		incubationPeriod = InfectionCalculator.calculateRandomlyIncubationPeriod();
+		illnessPeriod = InfectionCalculator.calculateRandomlyIllnessPeriod();
 	}
 	
 		
 
 	
-	/*--------------------
+	/**--------------------
 	 * calculate distance in km between 2 persons, disregarding widening
 	 * 1 degree = 60 nm, 1 nm = 1,852 km
 	 */	
@@ -47,14 +59,10 @@ public class Person {
 			Math.pow( p1.longitude - p2.longitude, 2)  +
 			Math.pow( p1.latitude - p2.latitude, 2)) / 60 * 1852);
 	}
-	public int distance( Person p) {
-		return distance( this, p);
-	}
-	
 	
 	
 
-	/*--------------------
+	/**--------------------
 	 * calculate the status of the person
 	 * the status is strictly order in time: healthy, inIncubation, ill, immune
 	 */	
@@ -75,13 +83,16 @@ public class Person {
 	
 	
 	
-	/*--------------------
-	 * if the day is given print the status of the person additionally
+	/**--------------------
+	 * object as string
 	 */	
 	public String toString() {
 		return String.format( "%7d name=%s age=%d dayOfInf=%d inkubationP=%d illnessP=%d",
 			id, firstName, age, dayOfInfection, incubationPeriod, illnessPeriod);
 	}
+	/**
+	 * object as string -  print the status of the person additionally
+	 */
 	public String toString( int day) {
 		return String.format( "%s status=%s", this.toString(), this.getStatus( day));
 	}

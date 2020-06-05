@@ -1,7 +1,12 @@
-package at.nsdb.nv;
+package at.nsdb.nv.model;
 
 import java.util.Vector;
 
+import at.nsdb.nv.utils.Utils;
+
+/**
+ * collection of persons with statistical information
+ */
 public class Persons {
 	private Vector<Person> persons;
 	private int minLongitude = Integer.MAX_VALUE;

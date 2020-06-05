@@ -1,4 +1,4 @@
-package at.nsdb.nv;
+package at.nsdb.nv.utils;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -6,8 +6,9 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Random;
+
+import at.nsdb.nv.Config;
 
 
 /*--------------------
@@ -17,7 +18,7 @@ public abstract class Utils {
 		
 
 	static Random random = new Random();
-	public static MyTimer mainTimer = new MyTimer();
+	public static MainTimer mainTimer = new MainTimer();
 	
 	/*--------------------
 	 * randomGetInt( 10, 12) means randomly 10, 11 or 12
@@ -54,11 +55,11 @@ public abstract class Utils {
 	public static void logging( Object o) {
 	    DateFormat formatter = new SimpleDateFormat( "dd.MM.,HH:mm:ss");
 	    String s = String.format( "%s,%s, %.3f,sec, %s,", 
-	    	Parameter.versionNr, formatter.format(new Date()), mainTimer.elapsedTime()/1000.0, o.toString());
+	    	Config.versionNr, formatter.format(new Date()), mainTimer.elapsedTime()/1000.0, o.toString());
 	    if( o.toString().startsWith( "****")) s = "\n" + s;
 	    System.out.println( s);
 	    
-		String fileName = Parameter.logFileFullFileName();
+		String fileName = Config.getLogFileFullName();
 	    if( fileName != "") {
 	        try {   
 	            // Open given file in append mode. 

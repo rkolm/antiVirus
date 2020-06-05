@@ -11,17 +11,22 @@ import java.util.stream.IntStream;
 
 import javax.swing.JFrame;
 
+import at.nsdb.nv.model.StatisticADay;
+import at.nsdb.nv.utils.Utils;
+import at.nsdb.nv.view.PanelPersons;
+import at.nsdb.nv.view.PanelStatistics;
+
 public class Main  extends JFrame {
 	private static final long serialVersionUID = 1L;
 		
 	public static void main( final String[] args ) throws IOException
     {	
 		// for statistics
-		HashMap<Integer, StatisticADay> statistics = new HashMap<Integer, StatisticADay>();
+		var statistics = new HashMap<Integer, StatisticADay>();
 		
 		IntStream.range( 1, 10).forEach( i -> Utils.logging( " "));
 		Utils.logging( "**** start Simulation-----------------------------------------------------");
-		Utils.logging( "logFile = " + Parameter.logFileFullFileName());
+		Utils.logging( "logFile = " + Config.getLogFileFullName());
 		
 		
 		/*--------------------
@@ -36,7 +41,8 @@ public class Main  extends JFrame {
 		 * 1. add biometric attributes to node 2. create relations with distance
 		 */
 		Utils.logging( "**** initialization ...");
-		neo4j.initialize();
+		neo4j.setBiometricsForAllPersons();
+		neo4j.setCanInfectRelationsForAllPersons();
 		Utils.logging( "---- initialization finished");
 
 		
@@ -52,7 +58,7 @@ public class Main  extends JFrame {
 			PanelPersons.getInstance( neo4j).paintPanelPerson( day, statistics);
 			if( day == 1) Utils.logging( "---- Day 1 finished");
 			else neo4j.printStatusPersons( day, statistics.get( day));
-		} while( day <= Parameter.stopAfterDay && statistics.get( day).getNumbPersonsInIncubation() > 0);
+		} while( day <= Config.getStopAfterDay() && statistics.get( day).getNumbPersonsInIncubation() > 0);
 		
 		
 		

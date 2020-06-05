@@ -1,12 +1,10 @@
-/***** -----------------------------------------------------------------------------
-/*
-/* creates all used Cypher- Queries as String
-/* 
-/***** -----------------------------------------------------------------------------
+package at.nsdb.nv.utils;
+
+import at.nsdb.nv.Neo4j;
+
+/**
+ * creates all used Cypher-Queries as String
  */
-
-package at.nsdb.nv;
-
 public class Cypher {
 	
 	
@@ -191,41 +189,36 @@ public class Cypher {
 	
 	
 	// get id2 and distance from all persons who can be infected
-	public static String infectPersons( int day, double quote) {
+	public static String infectPersons() {
 		String cypherQ = String.format(
-				"MATCH (p:%s)-[c:%s]->(q:%s) " +
-				"WHERE (q.%s = 0) AND (p.%s > 0) AND (p.%s <= %d) AND (%d <= p.%s + p.%s) " +
-				"WITH p, q, c.%s AS dist, rand() AS r " +
-				"WHERE ((r < 0.01) OR (r < " + quote + " * 1000.0 * 100.0 / dist / dist)) " +
-				"set q.%s = %d " +
-				"CREATE (p)-[:" + Neo4j.relType2nd.HasInfected + 
-					" {" + Neo4j.relAttribute.day + ":" + day + "}]->(q)",
-				Neo4j.labelName.Person, Neo4j.relType.CanInfect, Neo4j.labelName.Person, 
-				Neo4j.fieldName.dayOfInfection, Neo4j.fieldName.dayOfInfection, 
-					Neo4j.fieldName.dayOfInfection, day, day, Neo4j.fieldName.dayOfInfection,
-					Neo4j.fieldName.incubationPeriod,
-				Neo4j.relAttribute.distance.toString(),
-				Neo4j.fieldName.dayOfInfection,	day);
+				"MATCH (p:"+Neo4j.labelName.Person+")-[c:"+Neo4j.relType.CanInfect+"]->(q:"+Neo4j.labelName.Person+") " +
+				"WHERE (q."+Neo4j.fieldName.dayOfInfection+" = 0) " +
+				"  AND (p."+Neo4j.fieldName.dayOfInfection+" > 0) " +
+				"  AND (p."+Neo4j.fieldName.dayOfInfection+" <= $day) " +
+				"  AND ($day <= p."+Neo4j.fieldName.dayOfInfection+" + p."+Neo4j.fieldName.incubationPeriod+") " +
+				"WITH p, q, c."+Neo4j.relAttribute.distance+" AS dist, rand() AS r " +
+				"WHERE ((r < 0.01) OR (r < $quote * 1000.0 * 100.0 / dist / dist)) " +
+				"set q."+Neo4j.fieldName.dayOfInfection+" = $day " +
+				"CREATE (p)-[:" + Neo4j.relTypeVar.HasInfected + 
+					" {" + Neo4j.relAttribute.day + ":$day}]->(q)");
 		return cypherQ;
 	}
 	
 	
 	
 	
-	/*-----------------------------------------------------------------------------
-	/*
-	/* manipulate relations i.e. canInfect between 2 persons
-	/* 
-	/*-----------------------------------------------------------------------------
+	/**
+	 * CypherQuery to remove all variable relations between 2 persons
 	 */	
-	// remove all relations in neo4j
-	public static String removeAllRelations( Neo4j.relType2nd relType) {
+	public static String removeAllRelations( Neo4j.relTypeVar relType) {
 		String cypherQ = String.format( "Match ()-[m:%s]->() delete m",
 			relType);
 		return cypherQ;
 	}
 	
-	// create a canInfect- relation between 2 persons
+	/**
+	 * CypherQuery create a canInfect- relation between 2 persons
+	 */
 	public static String createCanInfect( int id1, int id2, int distance) {
 		String cypherQ = String.format(
 				"MATCH (p:%s {id: %d}), (q:%s {id: %d}) " +

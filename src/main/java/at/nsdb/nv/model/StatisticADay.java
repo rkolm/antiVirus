@@ -1,4 +1,6 @@
-package at.nsdb.nv;
+package at.nsdb.nv.model;
+
+import at.nsdb.nv.Config;
 
 public class StatisticADay {
 	// overall persons

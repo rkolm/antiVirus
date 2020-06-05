@@ -1,4 +1,4 @@
-package at.nsdb.nv;
+package at.nsdb.nv.model;
 
 
 /*--------------------

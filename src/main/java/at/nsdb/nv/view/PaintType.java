@@ -1,11 +1,13 @@
-package at.nsdb.nv;
+package at.nsdb.nv.view;
+
+import at.nsdb.nv.model.Person;
 
 public class PaintType {
 	
 	private int xPos, yPos;
 	private Person.status status;
 	
-	public PaintType(int xPos, int yPos, at.nsdb.nv.Person.status status) {
+	public PaintType(int xPos, int yPos, Person.status status) {
 		super();
 		this.xPos = xPos;
 		this.yPos = yPos;
