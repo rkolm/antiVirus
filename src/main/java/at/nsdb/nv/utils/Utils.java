@@ -7,6 +7,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 import at.nsdb.nv.Config;
 
@@ -16,9 +17,21 @@ import at.nsdb.nv.Config;
  */
 public abstract class Utils {
 		
-
 	static Random random = new Random();
 	public static MainTimer mainTimer = new MainTimer();
+	
+	
+	/*--------------------
+	 * program stop for sec seconds
+	 */
+	public static void sleepInSec( int sec) {
+		try {
+			TimeUnit.SECONDS.sleep( sec);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	
 	/*--------------------
 	 * randomGetInt( 10, 12) means randomly 10, 11 or 12

@@ -1,19 +1,24 @@
 package at.nsdb.nv.view;
 
+import java.awt.Button;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.HashMap;
 import java.util.Vector;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
+import at.nsdb.nv.InfectionCalculator;
 import at.nsdb.nv.Neo4j;
 import at.nsdb.nv.model.Person;
 import at.nsdb.nv.model.Persons;
 import at.nsdb.nv.model.StatisticADay;
+import at.nsdb.nv.utils.Utils;
 
 public class PanelPersons extends JFrame {
 	private static final long serialVersionUID = 1L;
@@ -44,11 +49,26 @@ public class PanelPersons extends JFrame {
 	private PanelPersons( Neo4j neo4j){
 		this.neo4j = neo4j;
 		
+		
 		// initialize xPos, yPos, status for each user 
 		setLongLatToMap();
 		
 		setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE);		
 		this.setVisible( true);
+		
+		Button buttonStopGo = new Button( InfectionCalculator.running ? "break" : "continue");
+		buttonStopGo.setSize( 100, 40);
+		jpanel.add( buttonStopGo);
+        buttonStopGo.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                InfectionCalculator.running = ! InfectionCalculator.running;
+                if( InfectionCalculator.running) Utils.logging( "continuing running ...");
+                else Utils.logging( "break coming soon");
+                buttonStopGo.setLabel( InfectionCalculator.running ? "break" : "continue");
+            }
+        });
+
+		
 		this.getContentPane().add( jpanel);
 		this.getContentPane().setBackground( Color.white);
 		this.setBackground( Color.white);

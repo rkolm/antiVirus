@@ -51,13 +51,17 @@ public class Main  extends JFrame {
 		 * calculate the spreading of the virus day by day
 		 */		
 		int day = 0;
-		do {
+		do {			
 			day++;
 			if( day == 1) Utils.logging( "**** Day 1 ...");
 			neo4j.day( day, statistics);
 			PanelPersons.getInstance( neo4j).paintPanelPerson( day, statistics);
 			if( day == 1) Utils.logging( "---- Day 1 finished");
 			else neo4j.printStatusPersons( day, statistics.get( day));
+			
+			while( ! InfectionCalculator.running) Utils.sleepInSec( 1);
+						
+		//} while( day <= Parameter.stopAfterDay && statistics.get( day).getNumbPersonsInIncubation() > 0);
 		} while( day <= Config.getStopAfterDay() && statistics.get( day).getNumbPersonsInIncubation() > 0);
 		
 		

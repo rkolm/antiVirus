@@ -2,10 +2,40 @@ package at.nsdb.nv;
 
 import at.nsdb.nv.utils.Utils;
 
-/**
- * calculations for infections
- */
 public abstract class InfectionCalculator {
+	
+	/*--------------------
+	 * Programstop after day
+	 */
+	public static final int stopAfterDay = 365; // best value 365
+	public static boolean running = true;
+	
+	/*--------------------
+	 * VersionsNr
+	 */
+	public static final String versionNr = "v1.4";
+	
+	// name of the log file
+	private static String logFile = "logging.txt"; 	
+	public static String logFileFullFileName() {
+		if( logFile == "") return "";
+		else {
+			String projectDirectory = System.getProperty("user.dir");
+			return projectDirectory.substring( 0, projectDirectory.lastIndexOf( "\\") + 1) + logFile;
+		}
+	}
+	
+	// if :CanInfect created -> export to .csv
+	private static String canInfectFile = "canInfect.csv"; 
+	public static String canInfectFileFullFileName() {
+		if( logFile == "") return "";
+		else {
+			String projectDirectory = System.getProperty("user.dir");
+			return projectDirectory.substring( 0, projectDirectory.lastIndexOf( "\\") + 1) + canInfectFile;
+		}
+	}
+	
+	
 	
 	/**--------------------
 	 * calculate randomly the incubation and illness period
