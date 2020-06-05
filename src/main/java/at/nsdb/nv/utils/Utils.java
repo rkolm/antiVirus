@@ -21,7 +21,7 @@ public abstract class Utils {
 	public static MainTimer mainTimer = new MainTimer();
 	
 	
-	/*--------------------
+	/**--------------------
 	 * program stop for sec seconds
 	 */
 	public static void sleepInSec( int sec) {
@@ -33,7 +33,7 @@ public abstract class Utils {
 	}
 	
 	
-	/*--------------------
+	/**--------------------
 	 * randomGetInt( 10, 12) means randomly 10, 11 or 12
 	 */
 	public static int randomGetInt( int min, int max) {
@@ -42,7 +42,7 @@ public abstract class Utils {
 	
 	
 	
-	/*--------------------
+	/**--------------------
 	 * random double number between 0 (inklusive) and 1 exklusive
 	 */
 	public static double randomGetDouble() {
@@ -51,9 +51,9 @@ public abstract class Utils {
 	
 	
 	
-	/*--------------------
+	/**--------------------
 	 * Random variable according to Gauss distribution with 
-	/* left/right- border and according to average and deviation 
+	 * left/right-border and according to average and deviation 
 	 */
 	public static int randomGetGauss( int min, int max, int mean, int dev) {
 		double g =  mean + random.nextGaussian() * dev;
@@ -62,8 +62,8 @@ public abstract class Utils {
 	
 	
 	
-	/*--------------------
-	 * logging in console and log- file
+	/**--------------------
+	 * logging in console and log-file
 	 */
 	public static void logging( Object o) {
 	    DateFormat formatter = new SimpleDateFormat( "dd.MM.,HH:mm:ss");

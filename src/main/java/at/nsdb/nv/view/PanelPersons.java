@@ -23,7 +23,7 @@ import at.nsdb.nv.utils.Utils;
 public class PanelPersons extends JFrame {
 	private static final long serialVersionUID = 1L;
 	private static PanelPersons instance = null;
-	private Neo4j neo4j;
+	private final Neo4j neo4j = Neo4j.getInstance();
 	
 	// Vectors with id's of all persons with new status
 	Vector<Integer> newInIncubation, newIll, newImmune; 
@@ -46,9 +46,7 @@ public class PanelPersons extends JFrame {
 	};
 
 
-	private PanelPersons( Neo4j neo4j){
-		this.neo4j = neo4j;
-		
+	private PanelPersons(){	
 		
 		// initialize xPos, yPos, status for each user 
 		setLongLatToMap();
@@ -77,9 +75,9 @@ public class PanelPersons extends JFrame {
 		setSize(new Dimension( panelWidth, panelHeight));
 	}
 
-	public static PanelPersons getInstance( Neo4j neo4j) {
+	public static PanelPersons getInstance() {
 		if (instance == null) {
-			instance = new PanelPersons( neo4j);
+			instance = new PanelPersons();
 		}
 		return instance;		
 	}
@@ -128,7 +126,7 @@ public class PanelPersons extends JFrame {
 		});
 	}
 
-	public void paintPanelPerson(int day, HashMap<Integer, StatisticADay> statistics) {
+	public void paintADay(int day, HashMap<Integer, StatisticADay> statistics) {
 		this.day = day;
 		this.statistics = statistics;
 		// get all ids with the new Status inIncubation
@@ -148,7 +146,7 @@ public class PanelPersons extends JFrame {
 		statisticADay.setNewNumbPersonsIll( newIll.size());
 		statisticADay.setNewNumbPersonsImmune( newImmune.size());
 		
-		setTitle( Neo4j.getStatusPersons( day, statisticADay));
+		setTitle( statisticADay.getStatusString( day));
 		
 		this.getContentPane().validate();		
 		this.repaint();

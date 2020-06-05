@@ -59,5 +59,16 @@ public class StatisticADay {
 	public double getQ() {
 		return (double) (newNumbPersonsInIncubation + numbPersonsInIncubation) /
 			(numbPersonsHealthy + numbPersonsInIncubation + numbPersonsIll + numbPersonsImmune);
+	}
+
+	public String getStatusString( int day) {
+		return String.format( 
+			"day=%d healthy=%d incubation=%d(%d) ill=%d(%d) immune=%d(%d) R=%5.2f Q=%5.1f%%",
+				day, 
+				getNumbPersonsHealthy(), 
+				getNumbPersonsInIncubation(), getNewNumbPersonsInIncubation(),
+				getNumbPersonsIll(), getNewNumbPersonsIll(),
+				getNumbPersonsImmune(), getNewNumbPersonsImmune(),
+				getR(), getQ()*100);
 	}	
 }
