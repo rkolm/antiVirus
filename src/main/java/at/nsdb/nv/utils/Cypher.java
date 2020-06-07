@@ -7,11 +7,12 @@ import at.nsdb.nv.utils.Constants.fieldName;
  */
 public class Cypher {
 	
-	/** create constraint and index for Person.id */	
+	/** create constraint and index for Person.id 	
 	public static String createConstraint() {
 		return "CREATE CONSTRAINT ON (p:"+Constants.labelName.Person+") " +
 			   "ASSERT p."+Constants.fieldName.id+" IS UNIQUE";
 	}
+	*/
 	
 	
 	/** remove biometric attributes from all nodes */
@@ -77,13 +78,13 @@ public class Cypher {
 	/** ids of persons, who are healthy */
 	public static String newPersonsHealthy() {
 		return 	"MATCH (p:" + Constants.labelNameVar.Healthy + ") " +
-				"RETURN p." + Constants.fieldName.id + " as id";
+				"RETURN id(p) as id";
 	}
 	/** ids of persons, who are new in incubation period */
 	public static String newPersonsInIncubation() {
 		return	"MATCH (p:" + Constants.labelNameVar.InIncubation + ") " +
 				"WHERE p." + Constants.fieldName.dayOfInfection + " = $day " +
-				"RETURN p." + Constants.fieldName.id + " as id";
+				"RETURN id(p) as id";
 	}
 	/** ids of persons, who are new in ill period */
 	public static String newPersonsIll() {
@@ -91,7 +92,7 @@ public class Cypher {
 				"MATCH (p:" + Constants.labelNameVar.Ill.toString() + ") " +
 				"WHERE p." + Constants.fieldName.dayOfInfection.toString() + 
 					" + p." + Constants.fieldName.incubationPeriod.toString() + " + 1 = $day " +
-				"RETURN p." + Constants.fieldName.id + " as id";
+				"RETURN id(p) as id";
 	}
 	/** ids of persons, who are new of immune (after illness) persons */
 	public static String newPersonsImmune() {
@@ -99,7 +100,7 @@ public class Cypher {
 				"WHERE p." + Constants.fieldName.dayOfInfection.toString() + 
 					" + p." + Constants.fieldName.incubationPeriod.toString() +
 					" + p." + Constants.fieldName.illnessPeriod.toString() + " + 1 = $day " +
-				"RETURN p." + Constants.fieldName.id + " as id";
+				"RETURN id(p) as id";
 	}
 	
 	

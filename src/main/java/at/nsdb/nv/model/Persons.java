@@ -13,7 +13,6 @@ public class Persons {
 	private int maxLongitude = Integer.MIN_VALUE;
 	private int minLatitude = Integer.MAX_VALUE;
 	private int maxLatitude = Integer.MIN_VALUE;
-	private int minId = Integer.MAX_VALUE;
 	
 	
 		
@@ -24,7 +23,6 @@ public class Persons {
 			if( p.getLongitude() > maxLongitude) maxLongitude = p.getLongitude();
 			if( p.getLatitude() < minLatitude) minLatitude = p.getLatitude();
 			if( p.getLatitude() > maxLatitude) maxLatitude = p.getLatitude();
-			if( p.getId() < minId) minId = p.getId();
 		}
 	}
 
@@ -32,11 +30,12 @@ public class Persons {
 		return this.persons.size();
 	}
 	
-	public Person getPersonById( int id) {
-		return persons.get( id - minId);
+	public Person getByIndex( int index) {
+		return persons.get(index);
 	}
 	public Person getPersonRandomly() {
-		return persons.get( Utils.randomGetInt( 0, persons.size() - minId));
+		int i = Utils.randomGetInt( 0, persons.size()-1);
+		return persons.get(i);
 	}
 	
 	
@@ -55,10 +54,6 @@ public class Persons {
 	}
 	public int getMaxLatitude() {
 		return maxLatitude;
-	}
-
-	public int getMinId() {
-		return minId;
 	}
 
 

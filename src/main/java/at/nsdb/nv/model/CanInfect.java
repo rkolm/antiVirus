@@ -5,7 +5,7 @@ package at.nsdb.nv.model;
  * connection (in neo4j relationship) between 2 persons
  */
 public class CanInfect {
-	private int id1, id2;
+	private long id1, id2;
 	int distance;
 	
 	
@@ -25,11 +25,11 @@ public class CanInfect {
 	/*--------------------
 	 * Setters, Getters
 	 */
-	public int getId1() {
+	public long getId1() {
 		return id1;
 	}
 
-	public int getId2() {
+	public long getId2() {
 		return id2;
 	}
 	
@@ -40,7 +40,7 @@ public class CanInfect {
 	/*--------------------
 	 * constructor
 	 */
-	public CanInfect( int id1, int id2, int distance) {
+	public CanInfect( long id1, long id2, int distance) {
 		this.id1 = id1;
 		this.id2 = id2;
 		this.distance = distance;

@@ -73,7 +73,7 @@ public class Neo4j {
 	
 	/** 
 	 * create missing db-constraints - neo4j creates an index for an constraint  
-	 */
+	 *
 	void setConstraint() {
 		try(Session session = getDriver().session()) {
 			session.run( Cypher.createConstraint());			
@@ -82,7 +82,7 @@ public class Neo4j {
 			return;
 		}
 		Utils.logging( "Constraint :Person(id) created");
-	}
+	}*/
 
 	/** 
 	 * create missing db-indices for the person node 
@@ -161,7 +161,7 @@ public class Neo4j {
 						p.setBiometrics();
 						//String cypherQ = Cypher.setBiometrics(p.getId(), p.getIncubationPeriod(), p.getIllnessPeriod());					
 						tx.run("MATCH (n:" + Constants.labelName.Person + ") " +
-							   "WHERE (n." + Constants.fieldName.id + "= $id) " +
+							   "WHERE (id(n) = $id) " +
 								 "SET n." + Constants.fieldName.dayOfInfection + "= 0," +
 								 	" n." + Constants.fieldName.incubationPeriod + "= $incubationPeriod," +
 									" n." + Constants.fieldName.illnessPeriod + "= $illnessPeriod",
@@ -189,27 +189,25 @@ public class Neo4j {
         
         final var relations = new HashSet<String>();
         final var persons = new Persons( readAllPersons());
-
+		
         for( Person p : persons.getAllPersons()) {
-            int id1 = p.getId();
             try( Session session = driver.session()) {
                 session.writeTransaction(tx -> {
                     // every node (person) creates a number of relations :CanInfect
                     int numbCanInfect = InfectionCalculator.calculateRandomlyNumbCanInfect();
                     do {
-                        int id2 = persons.getPersonRandomly().getId();
+						Person q = persons.getPersonRandomly();
                         lookings++;
-                        if( (id1 != id2) && (! relations.contains( id1 + "-" + id2))) {
-                            int distance = 
-                                Math.max( 1, Person.distance( persons.getPersonById(id1), persons.getPersonById(id2)));
+                        if( (p.getId() != q.getId()) && (! relations.contains( p.getId() + "-" + q.getId()))) {
+                            int distance = Math.max( 1, Person.distance( p, q));
                             if( InfectionCalculator.canInfect( distance)) {
                                 tx.run( 
                                     "MATCH (p:" + Constants.labelName.Person + "), (q:" + Constants.labelName.Person + ") " +
-                                    "WHERE (p." + Constants.fieldName.id + " = $id1 AND q." + Constants.fieldName.id + "= $id2)" +
+                                    "WHERE (id(p) = $id1 AND id(q) = $id2)" +
                                     "CREATE (p)-[:" + Constants.relType.CanInfect + " {" + Constants.relAttribute.distance + ":$distance}]->(q)",
-                                    parameters("id1", id1, "id2", id2, "distance", distance));
+                                    parameters("id1", p.getId(), "id2", q.getId(), "distance", distance));
                                 numbCanInfect--;
-                                relations.add( id1 + "-" + id2);
+                                relations.add( p.getId() + "-" + q.getId());
                             }
                         }
                     } while( numbCanInfect > 0);
@@ -223,7 +221,7 @@ public class Neo4j {
                     }
                     return 1;
                 });
-            }
+			}
         }
         
         //
@@ -367,16 +365,15 @@ public class Neo4j {
 			Record row = result.next();
 			Node node = row.get("p").asNode();
 			Person person = new Person();
-			int id= node.get( Constants.fieldName.id.toString()).asInt();
-			person.setId( id);
-			person.setFirstName( node.get( Constants.fieldName.firstName.toString()).asString());
-			person.setAge( node.get( Constants.fieldName.age.toString()).asInt());
+			person.setId( node.id());
+			person.setName( node.get( Constants.fieldName.firstName.toString()).asString());
+			//person.setAge( node.get( Constants.fieldName.age.toString()).asInt());
 			person.setLongitude( node.get( Constants.fieldName.longitude.toString()).asInt());
 			person.setLatitude( node.get( Constants.fieldName.latitude.toString()).asInt());
 			person.setIllnessPeriod( node.get( Constants.fieldName.illnessPeriod.toString()).asInt());
 			person.setDayOfInfection( node.get( Constants.fieldName.dayOfInfection.toString()).asInt());
 			person.setIncubationPeriod( node.get( Constants.fieldName.incubationPeriod.toString()).asInt());
-			persons.add( person);
+			persons.add(person);
 		}
 		return persons;
 	}
@@ -386,8 +383,8 @@ public class Neo4j {
 	 * @param day relevant day
 	 * @return id of all persons, who have new stati
 	 */
-	public Vector<Integer> getIdsFromPersonsWithNewStatus( Person.status status, int day) {
-		var newStatusVector = new Vector<Integer>();
+	public Vector<Long> getIdsFromPersonsWithNewStatus( Person.status status, int day) {
+		var newStatusVector = new Vector<Long>();
 		
 		try(Session session = driver.session()) {
 			return session.readTransaction(tx -> {
@@ -401,7 +398,7 @@ public class Neo4j {
 				
 				while( result.hasNext()) {
 					Record record = result.next();
-					int id = record.get( "id").asInt();
+					long id = record.get("id").asLong();
 					newStatusVector.add( id);
 				}
 				return newStatusVector;
@@ -440,9 +437,9 @@ public class Neo4j {
 		Vector<CanInfect> canInfects = new Vector<CanInfect>();
 		while( result.hasNext()) {
 			Record record = result.next();
-			int id1 = (record.get( "p").asNode()).get( Constants.fieldName.id.toString()).asInt();
-			int id2 = (record.get( "q").asNode()).get( Constants.fieldName.id.toString()).asInt();
-			Relationship c = record.get( "c").asRelationship();
+			long id1 = record.get("p").asNode().id();
+			long id2 = record.get("q").asNode().id();
+			Relationship c = record.get("c").asRelationship();
 			int distance = c.get( Constants.relAttribute.distance.toString()).asInt();
 			canInfects.add(new CanInfect(id1, id2, distance));
 		}

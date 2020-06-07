@@ -32,7 +32,7 @@ public final class VirusSimulation {
 		Utils.logging( "**** initialization ...");
         
         Utils.logging("checking constraints & indexes");
-		neo4j.setConstraint();
+		//neo4j.setConstraint();
         neo4j.setIndexForPerson( );
 
         Utils.logging("set all persons healthy");
@@ -116,7 +116,7 @@ public final class VirusSimulation {
 				neo4j.deleteAllVarLabels( tx);
 				
 				// 1. person
-				int id = persons.getPersonRandomly().getId();
+				long id = persons.getPersonRandomly().getId();
 				tx.run(Cypher.infectAPerson(), parameters("id", id, "day", day));
 				Utils.logging( "id " + id + " infected on day 1");
 

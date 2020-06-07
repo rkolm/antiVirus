@@ -11,16 +11,13 @@ public class Person {
 	public static enum status { healthy, inIncubation, ill, immune }
 	/** 
 	 * unique identifier */
-	private int id;
+	private long id;
 	/** 
 	 * geo-spatial data */
 	private int longitude, latitude; 
 	/** 
-	 * age */
-	private int age;
-	/** 
-	 * first name */
-	private String firstName;
+	 * name */
+	private String name;
 	/** 
 	 * day when person gets infected (the difference from day 0) */
 	private int dayOfInfection; 
@@ -87,8 +84,8 @@ public class Person {
 	 * object as string
 	 */	
 	public String toString() {
-		return String.format( "%7d name=%s age=%d dayOfInf=%d inkubationP=%d illnessP=%d",
-			id, firstName, age, dayOfInfection, incubationPeriod, illnessPeriod);
+		return String.format( "%7d name=%s dayOfInf=%d inkubationP=%d illnessP=%d",
+			id, name, dayOfInfection, incubationPeriod, illnessPeriod);
 	}
 	/**
 	 * object as string -  print the status of the person additionally
@@ -103,7 +100,7 @@ public class Person {
 	/*--------------------
 	 * Setters, Getters, no constructor!
 	 */
-	public int getId() {
+	public long getId() {
 		return id;
 	}
 
@@ -131,7 +128,7 @@ public class Person {
 		this.illnessPeriod = illnessPeriod;
 	}
 
-	public void setId(int id) {
+	public void setId(long id) {
 		this.id = id;
 	}
 
@@ -151,20 +148,12 @@ public class Person {
 		this.latitude = latitude;
 	}
 
-	public int getAge() {
-		return age;
-	}
-
-	public void setAge(int age) {
-		this.age = age;
-	}
-
 	public String getFirstName() {
-		return firstName;
+		return name;
 	}
 
-	public void setFirstName(String firstName) {
-		this.firstName = firstName;
+	public void setName(String name) {
+		this.name = name;
 	}
 
 }

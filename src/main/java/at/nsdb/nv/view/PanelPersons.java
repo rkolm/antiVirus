@@ -8,6 +8,7 @@ import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Vector;
 
 import javax.swing.JFrame;
@@ -26,10 +27,10 @@ public class PanelPersons extends JFrame {
 	private final Neo4j neo4j = Neo4j.getInstance();
 	
 	// Vectors with id's of all persons with new status
-	Vector<Integer> newInIncubation, newIll, newImmune; 
+	Vector<Long> newInIncubation, newIll, newImmune; 
 
 	// save a PaintType (xPos, yPos, status) Variable for each user
-	private static HashMap<Integer, PaintType> paintTypeMap;
+	private static final Map<Long, PaintType> paintTypeMap = new HashMap<>();
 	int day;
 	HashMap<Integer, StatisticADay> statistics;
 	
@@ -85,7 +86,7 @@ public class PanelPersons extends JFrame {
 	// initialize xPos, yPos, status for each user 
 	private void setLongLatToMap() {
 		Persons persons = neo4j.getAllPersons();
-		paintTypeMap = new HashMap<Integer, PaintType>();
+		paintTypeMap.clear();
 		for( Person p: persons.getAllPersons()) {
 			paintTypeMap.put( p.getId(),  new PaintType(
 				(int) ((double) (p.getLongitude() - persons.getMinLongitude()) / 
@@ -99,7 +100,7 @@ public class PanelPersons extends JFrame {
 	private void paintPersons(Graphics g) {
 		Graphics2D g2 = (Graphics2D) g;
 
-		if (paintTypeMap == null) return;
+		if (paintTypeMap.isEmpty()) return;
 		
 		// print all stati of all persons
 		paintTypeMap.forEach( (id, paintType) -> {
