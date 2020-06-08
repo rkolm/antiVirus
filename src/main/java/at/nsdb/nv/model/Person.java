@@ -14,7 +14,7 @@ public class Person {
 	private long id;
 	/** 
 	 * geo-spatial data */
-	private int longitude, latitude; 
+	private double longitude, latitude; 
 	/** 
 	 * name */
 	private String name;
@@ -53,8 +53,8 @@ public class Person {
 	 */	
 	public static int distance( Person p1, Person p2) {
 		return (int) ( Math.sqrt( 
-			Math.pow( p1.longitude - p2.longitude, 2)  +
-			Math.pow( p1.latitude - p2.latitude, 2)) / 60 * 1852);
+			Math.pow( p1.getLongitudeSec() - p2.getLongitudeSec(), 2)  +
+			Math.pow( p1.getLatitudeSec()  - p2.getLatitudeSec(),  2)) / 60 * 1852);
 	}
 	
 	
@@ -132,19 +132,29 @@ public class Person {
 		this.id = id;
 	}
 
-	public int getLongitude() {
+	/** longitude - unit [degree] */
+	public double getLongitude() {
 		return longitude;
 	}
+	/** longitude - unit [seconds] */
+	public int getLongitudeSec() {
+		return (int) (longitude * 3600);
+	}
 
-	public void setLongitude(int longitude) {
+	public void setLongitude(double longitude) {
 		this.longitude = longitude;
 	}
 
-	public int getLatitude() {
+	/** latitude - unit [degree] */
+	public double getLatitude() {
 		return latitude;
 	}
+	/** latitude - unit [seconds] */
+	public int getLatitudeSec() {
+		return (int) (latitude * 3600);
+	}
 
-	public void setLatitude(int latitude) {
+	public void setLatitude(double latitude) {
 		this.latitude = latitude;
 	}
 

@@ -5,6 +5,7 @@ import java.util.HashMap;
 import org.neo4j.driver.Session;
 
 import static org.neo4j.driver.Values.parameters;
+import static at.nsdb.nv.utils.Constants.labelNameVar;
 
 import at.nsdb.nv.model.Persons;
 import at.nsdb.nv.model.StatisticADay;
@@ -34,15 +35,15 @@ public final class VirusSimulation {
         Utils.logging("checking constraints & indexes");
 		//neo4j.setConstraint();
         neo4j.setIndexForPerson( );
-
-        Utils.logging("set all persons healthy");
-        neo4j.setAllPersonsToHealthy();
         
-        Utils.logging("remove all hasInfected-relations ");
+		Utils.logging("add biometric attributes to node");
+		neo4j.setBiometricsForAllPersons();
+		
+		Utils.logging("remove all hasInfected-relations ");
         neo4j.removeAllHasInfectedRelations();
 
-		Utils.logging("add biometric attributes to node");
-        neo4j.setBiometricsForAllPersons();
+		Utils.logging("set all persons healthy");
+        neo4j.setAllPersonsToHealthy();
         
 		Utils.logging("create relations with distance");
         neo4j.setCanInfectRelationsForAllPersons();
@@ -64,7 +65,7 @@ public final class VirusSimulation {
 	 * run the simulation 
 	 */
     public void run() {
-        		/**--------------------
+        /**--------------------
 		 * calculate the spreading of the virus day by day
 		 */		
 		int day = 0;
@@ -152,10 +153,10 @@ public final class VirusSimulation {
 				neo4j.deleteAllVarLabels( tx);
 				neo4j.setAllVarLabels( day, tx);
 
-				statisticADay.setNumbPersonsHealthy( neo4j.getNumbPersonsHealthy( day, tx));
-				statisticADay.setNumbPersonsInIncubation( neo4j.getNumbPersonsInIncubation(tx));
-				statisticADay.setNumbPersonsIll( neo4j.getNumbPersonsIll(tx));
-				statisticADay.setNumbPersonsImmune( neo4j.getNumbPersonsImmune(tx));
+				statisticADay.setNumbPersonsHealthy(neo4j.getNumbPersons(labelNameVar.Healthy, tx));
+				statisticADay.setNumbPersonsInIncubation(neo4j.getNumbPersons(labelNameVar.InIncubation, tx));
+				statisticADay.setNumbPersonsIll(neo4j.getNumbPersons(labelNameVar.Ill, tx));
+				statisticADay.setNumbPersonsImmune(neo4j.getNumbPersons(labelNameVar.Immune, tx));
 				return 1;
 			});
 		}

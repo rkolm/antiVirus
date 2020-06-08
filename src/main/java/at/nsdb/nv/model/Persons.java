@@ -19,10 +19,10 @@ public class Persons {
 	public Persons( Vector<Person> persons) {
 		this.persons= persons;
 		for( Person p : persons) {
-			if( p.getLongitude() < minLongitude) minLongitude = p.getLongitude();
-			if( p.getLongitude() > maxLongitude) maxLongitude = p.getLongitude();
-			if( p.getLatitude() < minLatitude) minLatitude = p.getLatitude();
-			if( p.getLatitude() > maxLatitude) maxLatitude = p.getLatitude();
+			if( p.getLongitudeSec() < minLongitude) minLongitude = p.getLongitudeSec();
+			if( p.getLongitudeSec() > maxLongitude) maxLongitude = p.getLongitudeSec();
+			if( p.getLatitudeSec() < minLatitude) minLatitude = p.getLatitudeSec();
+			if( p.getLatitudeSec() > maxLatitude) maxLatitude = p.getLatitudeSec();
 		}
 	}
 

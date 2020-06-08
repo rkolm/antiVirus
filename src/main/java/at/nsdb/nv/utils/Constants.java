@@ -38,7 +38,7 @@ public final class Constants {
 
 	// attributes of nodes
 	public static enum fieldName {
-		id, firstName, longitude, latitude, dayOfInfection, incubationPeriod, illnessPeriod
+		id, name, longitude, latitude, dayOfInfection, incubationPeriod, illnessPeriod
 	}
     
 }

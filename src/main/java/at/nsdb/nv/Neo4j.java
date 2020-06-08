@@ -64,10 +64,7 @@ public class Neo4j {
 	 */
 	void deleteAllVarLabels( Transaction tx) {
 		for( Constants.labelNameVar n : Constants.labelNameVar.values()) {
-			String cypher = 
-				"MATCH (p:" + Constants.labelName.Person + ") " +
-				"REMOVE p:" + n.toString();
-			tx.run( cypher);
+			tx.run(Cypher.deleteAllVariableLabels(n));
 		}
 	}
 	
@@ -160,17 +157,15 @@ public class Neo4j {
 					for (Person p : persons.getAllPersons()) {
 						p.setBiometrics();
 						//String cypherQ = Cypher.setBiometrics(p.getId(), p.getIncubationPeriod(), p.getIllnessPeriod());					
-						tx.run("MATCH (n:" + Constants.labelName.Person + ") " +
-							   "WHERE (id(n) = $id) " +
-								 "SET n." + Constants.fieldName.dayOfInfection + "= 0," +
-								 	" n." + Constants.fieldName.incubationPeriod + "= $incubationPeriod," +
-									" n." + Constants.fieldName.illnessPeriod + "= $illnessPeriod",
+						tx.run(Cypher.setBiometricsForPerson(),
 								parameters("id", p.getId(), 
 										   "incubationPeriod", p.getIncubationPeriod(), 
-										   "illnessPeriod", p.getIllnessPeriod()));							   
+										   "illnessPeriod", p.getIllnessPeriod()));	
 					}
 					return 1;
 				});
+			} catch (Exception e) {
+				Utils.logging("Exception setting biometrics: " + e.getCause());
 			}
 			Utils.logging("biometrics attributes for all persons set");
 		}
@@ -181,7 +176,10 @@ public class Neo4j {
 	 */
 	void setCanInfectRelationsForAllPersons() {
 		if( getNumbCanInfect() != 0) {
-            Utils.logging( "relations :CanInfect already exist");
+			Utils.logging( "relations :CanInfect already exist");		
+			if (Config.getExportRelations().equals("always")) { 
+				exportCanInfects();	
+			}
             return;
         } 
         
@@ -201,10 +199,7 @@ public class Neo4j {
                         if( (p.getId() != q.getId()) && (! relations.contains( p.getId() + "-" + q.getId()))) {
                             int distance = Math.max( 1, Person.distance( p, q));
                             if( InfectionCalculator.canInfect( distance)) {
-                                tx.run( 
-                                    "MATCH (p:" + Constants.labelName.Person + "), (q:" + Constants.labelName.Person + ") " +
-                                    "WHERE (id(p) = $id1 AND id(q) = $id2)" +
-                                    "CREATE (p)-[:" + Constants.relType.CanInfect + " {" + Constants.relAttribute.distance + ":$distance}]->(q)",
+                                tx.run( Cypher.addCanInfect(),
                                     parameters("id1", p.getId(), "id2", q.getId(), "distance", distance));
                                 numbCanInfect--;
                                 relations.add( p.getId() + "-" + q.getId());
@@ -222,11 +217,16 @@ public class Neo4j {
                     return 1;
                 });
 			}
-        }
-        
-        //
-        // canInfect- Relations export to csv
-        //
+		}
+		if (Config.getExportRelations().equals("whenNew")) { 
+			exportCanInfects();	
+		}
+	}
+
+	/**
+	 * export :CanInfect-Relationsto csv
+	 */
+	private void exportCanInfects() {
         Utils.logging( "exporting :CanInfect ...");
         String fileName = Config.canInfectFileFullFileName();
         if( fileName != "") {
@@ -243,7 +243,7 @@ public class Neo4j {
                 System.out.println(" Error in writing export CanInfect.csv " + fileName + " " + e); 
             } 
         }	
-        Utils.logging( "exporting :CanInfect finished");		
+        Utils.logging( "exporting :CanInfect finished");
 	}
 
 	/**
@@ -282,24 +282,10 @@ public class Neo4j {
 		}
 	}
 	
-	/** how many :Persons healthy? */
-	int getNumbPersonsHealthy( int day, Transaction tx) {
-		return getCount( Cypher.numbPersonsHealthy(), tx);
-	}
-	
-	/** how many :Persons inIncubation period? */
-	int getNumbPersonsInIncubation(Transaction tx) {
-		return getCount( Cypher.numbPersonsInIncubation(), tx);
-	}
-	
-	/** how many :Persons are ill */
-	int getNumbPersonsIll(Transaction tx) {		
-		return getCount( Cypher.numbPersonsIll(), tx);
-	}
-	
-	/** how many :Persons are immune */
-	int getNumbPersonsImmune(Transaction tx) {		
-		return getCount( Cypher.numbPersonsImmune(), tx);
+
+	/** how many :Persons with a given label */
+	int getNumbPersons(Constants.labelNameVar label, Transaction tx) {
+		return getCount( Cypher.numbPersonsWithLabel(label), tx);
 	}
 	
 	/** how many :Persons with attribute attributeName */
@@ -366,10 +352,9 @@ public class Neo4j {
 			Node node = row.get("p").asNode();
 			Person person = new Person();
 			person.setId( node.id());
-			person.setName( node.get( Constants.fieldName.firstName.toString()).asString());
-			//person.setAge( node.get( Constants.fieldName.age.toString()).asInt());
-			person.setLongitude( node.get( Constants.fieldName.longitude.toString()).asInt());
-			person.setLatitude( node.get( Constants.fieldName.latitude.toString()).asInt());
+			person.setName( node.get( Constants.fieldName.name.toString()).asString());
+			person.setLongitude( node.get( Constants.fieldName.longitude.toString()).asDouble());
+			person.setLatitude( node.get( Constants.fieldName.latitude.toString()).asDouble());
 			person.setIllnessPeriod( node.get( Constants.fieldName.illnessPeriod.toString()).asInt());
 			person.setDayOfInfection( node.get( Constants.fieldName.dayOfInfection.toString()).asInt());
 			person.setIncubationPeriod( node.get( Constants.fieldName.incubationPeriod.toString()).asInt());
@@ -469,8 +454,7 @@ public class Neo4j {
 				}
 		
 				// print number of CanInfect (relations in the database)
-				Vector<CanInfect> canInfects = new Vector<CanInfect>();
-				canInfects = this.getAllCanInfects( tx);
+				var canInfects = this.getAllCanInfects( tx);
 				Utils.logging( String.format("%d (%d) relations found, for example:",
 					canInfects.size(), this.getNumbCanInfects( tx)));
 				

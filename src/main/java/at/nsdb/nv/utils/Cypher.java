@@ -1,11 +1,36 @@
 package at.nsdb.nv.utils;
 
 import at.nsdb.nv.utils.Constants.fieldName;
+import at.nsdb.nv.utils.Constants.labelNameVar;
 
 /**
  * creates all used Cypher-Queries as String
  */
 public class Cypher {
+
+	/** import node data */
+	public static String importNodeData() {
+		return ":auto USING PERIODIC COMMIT 10000" +
+					"LOAD CSV WITH HEADERS FROM 'file:///VirtualData50k.csv' as p" +
+					"FIELDTERMINATOR ';'" +
+					"CREATE( n:Person { " +
+						"name:toString(p.name), " + 
+						"companyName:toString(p.companyName), " +
+						"address:toString(p.address), " +
+						"city:toString(p.city), " +
+						"county:toString(p.county), " + 
+						"state:toString(p.state), " +
+						"zip:toInteger(p.zip), " +
+						"phone1:toString(p.phone1), " + 
+						"phone2:toString(p.phone2), " +
+						"email:toString(p.email), " +
+						"web:toString(p.web), " +
+						"age:toInteger(p.age), " +
+						"longitude:toFloat(p.longitude), " +
+						"latitude:toFloat(p.latitude) " +
+						"})";
+	}
+
 	
 	/** create constraint and index for Person.id 	
 	public static String createConstraint() {
@@ -41,7 +66,7 @@ public class Cypher {
 	// infect a person
 	public static String infectAPerson() {
 		return "MATCH( n:"+Constants.labelName.Person+") " +
-			   "WHERE n.id = $id " +
+			   "WHERE id(n) = $id " +
 			   "SET n."+Constants.fieldName.dayOfInfection+"= $day";
 	}
 	
@@ -169,7 +194,13 @@ public class Cypher {
 		return	"MATCH (p:" + Constants.labelNameVar.Healthy + ") " +
 				"RETURN count( p) as count";
 	}
-	
+
+	// number of persons with label
+	public static String numbPersonsWithLabel(Constants.labelNameVar labelName) {
+		return	"MATCH (p:" + labelName + ") " +
+				"RETURN count( p) as count";
+	}
+
 	// number of persons in incubation period
 	public static String numbPersonsInIncubation() {
 		return	"MATCH (p:" + Constants.labelNameVar.InIncubation + ") " +
@@ -247,11 +278,34 @@ public class Cypher {
 	public static String setLabelImmune() {
 		return
 			"MATCH (p:" + Constants.labelName.Person + ") " +
-			"WHERE (p." + Constants.fieldName.dayOfInfection + " > 0) " + 
-			" AND ($day > " + 
-					"p." + Constants.fieldName.dayOfInfection + " + p." + Constants.fieldName.incubationPeriod + 
-						" + p." + Constants.fieldName.illnessPeriod + ") " +
-			"SET p: " + Constants.labelNameVar.Immune.toString();
+			"WHERE p." + Constants.fieldName.dayOfInfection + " > 0 " + 
+			" AND  $day > p." + Constants.fieldName.dayOfInfection + 
+					  " + p." + Constants.fieldName.incubationPeriod + 
+					  " + p." + Constants.fieldName.illnessPeriod + 
+			" SET p: " + Constants.labelNameVar.Immune.toString();
+	}
+
+	/** add relation :CanInfect between two persons */
+	public static String addCanInfect() {
+		return "MATCH (p:" + Constants.labelName.Person + "), (q:" + Constants.labelName.Person + ") " +
+				"WHERE id(p) = $id1 AND id(q) = $id2" +
+				"CREATE (p)-[:" + Constants.relType.CanInfect + 
+				             " {" + Constants.relAttribute.distance + ":$distance}]->(q)";
+	}
+
+	/** set biometrics for a :Person */
+	public static String setBiometricsForPerson() {
+		return "MATCH (n:" + Constants.labelName.Person + ") " +
+				"WHERE id(n) = $id " +
+				"SET n." + Constants.fieldName.dayOfInfection + "= 0," +
+					" n." + Constants.fieldName.incubationPeriod + "= $incubationPeriod," +
+					" n." + Constants.fieldName.illnessPeriod + "= $illnessPeriod";
+	}
+
+	/** remove a variable label from a :Person */
+	public static String deleteAllVariableLabels(labelNameVar labelName) {
+		return "MATCH (p:" + Constants.labelName.Person + ") " +
+				"REMOVE p:" + labelName;
 	}
 }
 	

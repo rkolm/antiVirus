@@ -18,7 +18,7 @@ public final class Config {
 	/*--------------------
 	 * VersionsNr
 	 */
-	public static final String versionNr = "v1.4";
+	public static final String versionNr = "v1.5";
 
     /** constructor */
     private Config() {
@@ -61,12 +61,26 @@ public final class Config {
         return getInstance().props.getProperty("db.password", "nsdb");
     }
 
+    /** 
+     * @return dataset for simulation 
+     * */
+    public static String getDataSet() {
+        return getInstance().props.getProperty("db.dataset", "default");
+    }
+
     /**
      * @return Programstop after day
      */
     public static int getStopAfterDay() {
         String stopAfterDay = getInstance().props.getProperty("run.stopAfterDay");
         return !StringUtils.isNumeric(stopAfterDay) ? 365 : Integer.valueOf(stopAfterDay);
+    }
+
+     /**
+     * @return export relations
+     */
+    public static String getExportRelations() {
+        return getInstance().props.getProperty("run.exportRelations", "whenNew");
     }
 
     /** 

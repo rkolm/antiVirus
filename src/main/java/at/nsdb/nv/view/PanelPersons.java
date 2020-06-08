@@ -89,9 +89,9 @@ public class PanelPersons extends JFrame {
 		paintTypeMap.clear();
 		for( Person p: persons.getAllPersons()) {
 			paintTypeMap.put( p.getId(),  new PaintType(
-				(int) ((double) (p.getLongitude() - persons.getMinLongitude()) / 
+				(int) ((double) (p.getLongitudeSec() - persons.getMinLongitude()) / 
 					( persons.getMaxLongitude()-persons.getMinLongitude()) * (panelWidth*0.7-2) + 1.0), 
-				(int) ((double) (p.getLatitude() - persons.getMinLatitude()) / 
+				(int) ((double) (p.getLatitudeSec() - persons.getMinLatitude()) / 
 					( persons.getMaxLatitude()-persons.getMinLatitude()) * (panelHeight-2) + 1.0),
 				Person.status.healthy));	
 		}
