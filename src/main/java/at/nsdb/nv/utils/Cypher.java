@@ -223,8 +223,9 @@ public class Cypher {
 	
 	// number of relations (canInfect)
 	public static String numbCanInfects() {
-		return "MATCH ()-[r:"+Constants.relType.CanInfect+"]->() " +
-				"RETURN count(r) as count";
+		return "MATCH (p)-[r:"+Constants.relType.CanInfect+"]->() " +
+			   " WHERE "+Config.getPersonFilter()+
+			   " RETURN count(r) as count";
 	}
 	
 	
