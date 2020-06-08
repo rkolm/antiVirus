@@ -64,8 +64,14 @@ public final class Config {
     /** 
      * @return dataset for simulation 
      * */
-    public static String getDataSet() {
-        return getInstance().props.getProperty("db.dataset", "default");
+    public static String getPersonFilter() {
+
+        String personFilter = getInstance().props.getProperty("run.personFilter", "");
+		if (!personFilter.isEmpty()) {
+            return personFilter;
+        } else {
+            return "true";
+        }
     }
 
     /**

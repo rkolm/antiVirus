@@ -1,5 +1,6 @@
 package at.nsdb.nv.utils;
 
+import at.nsdb.nv.Config;
 import at.nsdb.nv.utils.Constants.fieldName;
 import at.nsdb.nv.utils.Constants.labelNameVar;
 
@@ -49,8 +50,9 @@ public class Cypher {
 	}
 	
 	/** add biometric attributes to all persons */ 
-	public static String addBiometricAttributesToAllPersons() {
+	public static String addBiometricAttributesToPersons() {
 		return "MATCH( p:"+Constants.labelName.Person+") " +
+			   "WHERE "+Config.getPersonFilter()+
 			   "SET p."+Constants.fieldName.illnessPeriod+" = 0," +
 				  " p."+Constants.fieldName.incubationPeriod+" = 0," +
 				  " p."+Constants.fieldName.dayOfInfection+" = 0";
@@ -80,8 +82,9 @@ public class Cypher {
 		
 	/** get all persons */
 	public static String getAllPersons() {
-		return "MATCH (p:"+Constants.labelName.Person+") " +
-				"RETURN p";
+		return "MATCH (p:" +Constants.labelName.Person+") " +
+		       "WHERE "+Config.getPersonFilter()+
+			   " RETURN p";
 	}
 	
 	/** download all persons in incubation period. only persons in incubation period can infect */
@@ -127,9 +130,7 @@ public class Cypher {
 					" + p." + Constants.fieldName.illnessPeriod.toString() + " + 1 = $day " +
 				"RETURN id(p) as id";
 	}
-	
-	
-	
+		
 	
 	/*-----------------------------------------------------------------------------
 	/*
@@ -187,12 +188,6 @@ public class Cypher {
 	public static String numbPersons() {
 		return	"MATCH (n:"+Constants.labelName.Person+") " +
 				"RETURN count(n) as count";
-	}
-	
-	// number of persons who are healthy
-	public static String numbPersonsHealthy() {
-		return	"MATCH (p:" + Constants.labelNameVar.Healthy + ") " +
-				"RETURN count( p) as count";
 	}
 
 	// number of persons with label
@@ -288,7 +283,7 @@ public class Cypher {
 	/** add relation :CanInfect between two persons */
 	public static String addCanInfect() {
 		return "MATCH (p:" + Constants.labelName.Person + "), (q:" + Constants.labelName.Person + ") " +
-				"WHERE id(p) = $id1 AND id(q) = $id2" +
+				"WHERE id(p) = $id1 AND id(q) = $id2 " +
 				"CREATE (p)-[:" + Constants.relType.CanInfect + 
 				             " {" + Constants.relAttribute.distance + ":$distance}]->(q)";
 	}

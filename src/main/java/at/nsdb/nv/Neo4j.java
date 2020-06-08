@@ -96,18 +96,6 @@ public class Neo4j {
 				Utils.logging( "Index Person." + attributeName + " created");
 		}
 	}   
-	
-	/**
-	 * set all persons to healthy
-	 */
-	void setAllPersonsToHealthy() {
-		try (Session session = driver.session()) {
-			session.writeTransaction(tx -> {
-				tx.run( Cypher.setAllPersonsToHealthy());
-				return 1;
-			});
-		}	
-	}
 
 	/**
 	 * remove all :HasInfected-relations
@@ -122,53 +110,56 @@ public class Neo4j {
 	}
 
 	/**
-	 * set biometric attributes for all :Person-nodes
+	 * remove biometric attributes from all :Person-nodes
 	 */
-	void setBiometricsForAllPersons() {
-		int numbPersons = getNumbPersons();
-		int withDayOfInfection = getNumbPersonsWithAttribute( Constants.fieldName.dayOfInfection);
-		int withIncubationPeriod = getNumbPersonsWithAttribute( Constants.fieldName.incubationPeriod);
-		int withIllnessPeriod = getNumbPersonsWithAttribute( Constants.fieldName.illnessPeriod);
-		if( (numbPersons == withDayOfInfection) && (withIncubationPeriod == withIllnessPeriod) &&
-			(numbPersons == withIllnessPeriod)) {
-			Utils.logging( "biometrics already exist");
-		} else {
-			try (Session session = driver.session()) {
-				session.writeTransaction(tx -> {
-					if( withDayOfInfection > 0 || withIncubationPeriod > 0 || withIllnessPeriod > 0) {
-						tx.run(Cypher.removeBiometricAttributesFromAllPersons());
-						Utils.logging("all biometric attributes deleted");
-					}
-	
-					tx.run(Cypher.addBiometricAttributesToAllPersons());
-					Utils.logging("biometric attributes e.g. incubation period to :person added");
-					
-					return 1;
-				});
-			}
-	
-			var persons = new Persons(readAllPersons());
-			// set content to biometric attributes
-			Utils.logging("set biometrics contents to all persons ...");
-			try (Session session = driver.session()) {
-				session.writeTransaction(tx -> {
-					// set biometrics and upload to neo4j
-					// how to iterate a HashMap easily?
-					for (Person p : persons.getAllPersons()) {
-						p.setBiometrics();
-						//String cypherQ = Cypher.setBiometrics(p.getId(), p.getIncubationPeriod(), p.getIllnessPeriod());					
-						tx.run(Cypher.setBiometricsForPerson(),
-								parameters("id", p.getId(), 
-										   "incubationPeriod", p.getIncubationPeriod(), 
-										   "illnessPeriod", p.getIllnessPeriod()));	
-					}
-					return 1;
-				});
-			} catch (Exception e) {
-				Utils.logging("Exception setting biometrics: " + e.getCause());
-			}
-			Utils.logging("biometrics attributes for all persons set");
+	void removeBiometricsFromAllPersons() {
+		try (Session session = driver.session()) {
+			session.writeTransaction(tx -> {				
+				tx.run(Cypher.removeBiometricAttributesFromAllPersons());				
+				return 1;
+			});			
 		}
+		Utils.logging("removing all biometric attributes finished");			
+	}
+
+	/**
+	 * add biometric attributes from all :Person-nodes
+	 */
+	void addBiometricsToPersons() {
+		try (Session session = driver.session()) {
+			session.writeTransaction(tx -> {
+				tx.run(Cypher.addBiometricAttributesToPersons());								
+				return 1;
+			});
+		}
+		Utils.logging("adding biometric attributes e.g. incubation period to :Person-nodes finished");
+	}
+
+	/**
+	 * set values for the biometric attributes for all selected :Person-nodes
+	 */
+	void setBiometricValues() {
+		var persons = new Persons(readAllPersons());
+		Utils.logging("setting biometric values for "+ persons.getAllPersons().size() +" persons ...");
+
+		try (Session session = driver.session()) {
+			session.writeTransaction(tx -> {
+				// set biometrics and upload to neo4j
+				// how to iterate a HashMap easily?
+				for (Person p : persons.getAllPersons()) {
+					p.setBiometrics();
+					//String cypherQ = Cypher.setBiometrics(p.getId(), p.getIncubationPeriod(), p.getIllnessPeriod());					
+					tx.run(Cypher.setBiometricsForPerson(),
+							parameters("id", p.getId(), 
+										"incubationPeriod", p.getIncubationPeriod(), 
+										"illnessPeriod", p.getIllnessPeriod()));	
+				}
+				return 1;
+			});
+		} catch (Exception e) {
+			Utils.logging("error setting biometrics: " + e.getCause());
+		}
+		Utils.logging("setting biometric attributes finished");		
 	}
 	
 	/**
@@ -176,14 +167,14 @@ public class Neo4j {
 	 */
 	void setCanInfectRelationsForAllPersons() {
 		if( getNumbCanInfect() != 0) {
-			Utils.logging( "relations :CanInfect already exist");		
+			Utils.logging( ":CanInfect-relations already exist");		
 			if (Config.getExportRelations().equals("always")) { 
 				exportCanInfects();	
 			}
             return;
         } 
         
-        Utils.logging( "relations :CanInfect creating ...");        
+        Utils.logging( "creating :CanInfect-relations");        
         
         final var relations = new HashSet<String>();
         final var persons = new Persons( readAllPersons());
@@ -227,7 +218,7 @@ public class Neo4j {
 	 * export :CanInfect-Relationsto csv
 	 */
 	private void exportCanInfects() {
-        Utils.logging( "exporting :CanInfect ...");
+        Utils.logging( "exporting :CanInfect-relations to csv-file");
         String fileName = Config.canInfectFileFullFileName();
         if( fileName != "") {
             try {   
@@ -243,7 +234,7 @@ public class Neo4j {
                 System.out.println(" Error in writing export CanInfect.csv " + fileName + " " + e); 
             } 
         }	
-        Utils.logging( "exporting :CanInfect finished");
+        Utils.logging( "exporting :CanInfect-relations finished");
 	}
 
 	/**
@@ -282,7 +273,6 @@ public class Neo4j {
 		}
 	}
 	
-
 	/** how many :Persons with a given label */
 	int getNumbPersons(Constants.labelNameVar label, Transaction tx) {
 		return getCount( Cypher.numbPersonsWithLabel(label), tx);
@@ -441,18 +431,18 @@ public class Neo4j {
 	 */
 	public void printNeo4jContent() {
 		var persons = new Persons( readAllPersons());
-		try( Session session = driver.session()) {	
-			session.readTransaction(tx -> {
 
-				// print number of persons (nodes in the database)
-				Utils.logging(String.format( "%d (%d) persons found, for example:", 
-					persons.getNumberPersons(), persons.getNumberPersons()));
-		
-				// print randomly 3 persons
-				for (int i = 1; i <= Math.min( 3, this.getNumbPersons( tx)); i++) {
-					Utils.logging( persons.getPersonRandomly());
-				}
-		
+		// print number of persons (nodes in the database)
+		Utils.logging(String.format( "%d (%d) persons found, for example:", 
+		persons.getNumberPersons(), persons.getNumberPersons()));
+
+		// print randomly 3 persons				
+		Utils.logging( persons.getPersonRandomly());
+		Utils.logging( persons.getPersonRandomly());
+		Utils.logging( persons.getPersonRandomly());
+
+		try( Session session = driver.session()) {	
+			session.readTransaction(tx -> {		
 				// print number of CanInfect (relations in the database)
 				var canInfects = this.getAllCanInfects( tx);
 				Utils.logging( String.format("%d (%d) relations found, for example:",

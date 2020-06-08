@@ -15,7 +15,5 @@ public class Main {
 		VirusSimulation simulation = VirusSimulation.getInstance();
 		simulation.run();
 		
-        Utils.logging( "**** printing db status/content ...");
-		Neo4j.getInstance().printNeo4jContent();
     }
 }

@@ -32,23 +32,25 @@ public final class VirusSimulation {
 		 */
 		Utils.logging( "**** initialization ...");
         
-        Utils.logging("checking constraints & indexes");
+        Utils.logging("checking indexes");
 		//neo4j.setConstraint();
         neo4j.setIndexForPerson( );
         
-		Utils.logging("add biometric attributes to node");
-		neo4j.setBiometricsForAllPersons();
+		Utils.logging("initialize biometric attributes for :Person-nodes");
+		neo4j.removeBiometricsFromAllPersons();
+		neo4j.addBiometricsToPersons();
+		neo4j.setBiometricValues();
 		
-		Utils.logging("remove all hasInfected-relations ");
+		Utils.logging("remove all :HasInfected-relations ");
         neo4j.removeAllHasInfectedRelations();
-
-		Utils.logging("set all persons healthy");
-        neo4j.setAllPersonsToHealthy();
         
-		Utils.logging("create relations with distance");
+		Utils.logging("create :CanInfect-relations with distance");
         neo4j.setCanInfectRelationsForAllPersons();
         
 		Utils.logging( "---- initialization finished");
+
+		Utils.logging( "**** printing db status/content ...");
+		Neo4j.getInstance().printNeo4jContent();
     }
 
     /** 
