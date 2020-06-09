@@ -41,6 +41,8 @@ public class Neo4j {
 
 	private int nodesDone = 0;
 	private int lookings = 0;
+	private boolean newCity;
+	private boolean neo4jPreparedForActiveCity;
 
 	/** private constructor */
 	private Neo4j() {
@@ -58,13 +60,62 @@ public class Neo4j {
 		return instance;
 	}
 	
+	/** get the singleton-instance */
+	public void init() {
+		if( this.neo4jPreparedForActiveCity()) {
+			newCity = false;
+			Utils.logging( "DB already prepared for " + Config.getPersonFilter());
+		}
+		else {
+			newCity = true;
+			Utils.logging( "preparing neo4j for " + Config.getPersonFilter() + " ...");
+		}
+		
+		//new city?
+		try (Session session = driver.session()) {
+			session.writeTransaction(tx -> {
+				if( newCity) {
+					Utils.logging( "reorganize labels Person");
+					tx.run( Cypher.removeLabelPersonFromAllNodes());
+					tx.run( Cypher.setLabelPersonToChoosenNodes());
+					
+				} else {
+					Utils.logging( "set all Persons to healthy");
+					tx.run( Cypher.setAllPersonsToHealthy());
+				}
+				return 1;
+			});
+		}
+		
+		Utils.logging("remove all :HasInfected-relations ");
+		this.removeAllHasInfectedFromAllNodes();
+		
+		if( newCity) {
+			Utils.logging( "initialize biometric attributes for :Person-nodes");
+			this.removeBiometricsFromAllNodes();
+			this.addBiometricsToPersons();
+			this.setBiometricValues();
+
+			this.setCanInfectRelationsForAllPersons();
+			if (Config.getExportRelations().equals("whenNew")) exportCanInfects();	
+		}
+		
+		if (Config.getExportRelations().equals("always")) exportCanInfects();
+		
+		Utils.logging( "---- initialization finished");
+		
+		Utils.logging( "**** printing db status/content ...");
+		Neo4j.getInstance().printNeo4jContent();
+	}
+	
+	
 	/** 
 	 * delete all variable node-labels
 	 * @param tx Transaction
 	 */
-	void deleteAllVarLabels( Transaction tx) {
+	void removeAllVariableLabelsFromAllPersons( Transaction tx) {
 		for( Constants.labelNameVar n : Constants.labelNameVar.values()) {
-			tx.run(Cypher.deleteAllVariableLabels(n));
+			tx.run(Cypher.removeAllVariableLabelsFromAllPersons( n));
 		}
 	}
 	
@@ -100,10 +151,18 @@ public class Neo4j {
 	/**
 	 * remove all :HasInfected-relations
 	 */
-	void removeAllHasInfectedRelations() {
+	void removeAllHasInfectedFromAllNodes() {
 		try (Session session = driver.session()) {
 			session.writeTransaction(tx -> {
-				tx.run( Cypher.removeAllRelations( Constants.relTypeVar.HasInfected));
+				tx.run( Cypher.removeAllHasInfectedFromAllNodes( Constants.relTypeVar.HasInfected));
+				return 1;
+			});
+		}	
+	}
+	void removeAllCanInfectFromAllNodes() {
+		try (Session session = driver.session()) {
+			session.writeTransaction(tx -> {
+				tx.run( Cypher.removeAllCanInfectFromAllNodes( Constants.relType.CanInfect));
 				return 1;
 			});
 		}	
@@ -112,10 +171,10 @@ public class Neo4j {
 	/**
 	 * remove biometric attributes from all :Person-nodes
 	 */
-	void removeBiometricsFromAllPersons() {
+	void removeBiometricsFromAllNodes() {
 		try (Session session = driver.session()) {
 			session.writeTransaction(tx -> {				
-				tx.run(Cypher.removeBiometricAttributesFromAllPersons());				
+				tx.run(Cypher.removeBiometricAttributesFromAllNodes());				
 				return 1;
 			});			
 		}
@@ -149,7 +208,7 @@ public class Neo4j {
 				for (Person p : persons.getAllPersons()) {
 					p.setBiometrics();
 					//String cypherQ = Cypher.setBiometrics(p.getId(), p.getIncubationPeriod(), p.getIllnessPeriod());					
-					tx.run(Cypher.setBiometricsForPerson(),
+					tx.run(Cypher.setBiometricsForOnePerson(),
 							parameters("id", p.getId(), 
 										"incubationPeriod", p.getIncubationPeriod(), 
 										"illnessPeriod", p.getIllnessPeriod()));	
@@ -165,16 +224,9 @@ public class Neo4j {
 	/**
 	 * set missing :CanInfect-relations for all :Person-nodes
 	 */
-	void setCanInfectRelationsForAllPersons() {
-		if( getNumbCanInfect() != 0) {
-			Utils.logging( ":CanInfect-relations already exist");		
-			if (Config.getExportRelations().equals("always")) { 
-				exportCanInfects();	
-			}
-            return;
-        } 
-        
-        Utils.logging( "creating :CanInfect-relations");        
+	void setCanInfectRelationsForAllPersons() {        
+        Utils.logging( "creating :CanInfect-relations");  
+        this.removeAllCanInfectFromAllNodes();
         
         final var relations = new HashSet<String>();
         final var persons = new Persons( readAllPersons());
@@ -184,12 +236,13 @@ public class Neo4j {
                 session.writeTransaction(tx -> {
                     // every node (person) creates a number of relations :CanInfect
                     int numbCanInfect = InfectionCalculator.calculateRandomlyNumbCanInfect();
+                    int startLookings = lookings;
                     do {
 						Person q = persons.getPersonRandomly();
                         lookings++;
                         if( (p.getId() != q.getId()) && (! relations.contains( p.getId() + "-" + q.getId()))) {
                             int distance = Math.max( 1, Person.distance( p, q));
-                            if( InfectionCalculator.canInfect( distance)) {
+                            if( InfectionCalculator.canInfect( distance) || (lookings-startLookings)>50000) {
                                 tx.run( Cypher.addCanInfect(),
                                     parameters("id1", p.getId(), "id2", q.getId(), "distance", distance));
                                 numbCanInfect--;
@@ -208,9 +261,6 @@ public class Neo4j {
                     return 1;
                 });
 			}
-		}
-		if (Config.getExportRelations().equals("whenNew")) { 
-			exportCanInfects();	
 		}
 	}
 
@@ -247,10 +297,10 @@ public class Neo4j {
 	 */
 	void setAllVarLabels( int day, Transaction tx) {
 		var params = parameters("day", day);
-		tx.run( Cypher.setLabelHealthy());		
-		tx.run( Cypher.setLabelInIncubation(), params);
-		tx.run( Cypher.setLabelIll(), params);
-		tx.run( Cypher.setLabelImmune(), params);
+		tx.run( Cypher.setPersonsToHealthy());		
+		tx.run( Cypher.setPersonsToInIncubation(), params);
+		tx.run( Cypher.setPersonsToIll(), params);
+		tx.run( Cypher.setPersonsToImmune(), params);
 	}	
 		
 	
@@ -273,9 +323,9 @@ public class Neo4j {
 		}
 	}
 	
-	/** how many :Persons with a given label */
+	/** how many :Persons with a given labelNameVar */
 	int getNumbPersons(Constants.labelNameVar label, Transaction tx) {
-		return getCount( Cypher.numbPersonsWithLabel(label), tx);
+		return getCount( Cypher.numbPersonsWithLabelNameVar(label), tx);
 	}
 	
 	/** how many :Persons with attribute attributeName */
@@ -289,14 +339,14 @@ public class Neo4j {
 	}
 	
 	/** how many :CanInfect-realations are in the db */ 
-	private int getNumbCanInfects( Transaction tx) {		
-		String cypherQ = Cypher.numbCanInfects();
+	private int getNumbPersonsWithCanInfects( Transaction tx) {		
+		String cypherQ = Cypher.numbPersonsWithCanInfects();
 		return getCount( cypherQ, tx);
 	}
-	int getNumbCanInfect() {	
+	int getNumbPersonsWithCanInfects() {	
 		try(Session session = driver.session()) {
 			return session.readTransaction(tx -> {
-				return getNumbCanInfects( tx);
+				return getNumbPersonsWithCanInfects( tx);
 			});
 		}
 	}
@@ -365,10 +415,10 @@ public class Neo4j {
 			return session.readTransaction(tx -> {
 				
 				String cypherQ = "";
-				if( status == Person.status.healthy) cypherQ = Cypher.newPersonsHealthy();
-				else if( status == Person.status.inIncubation) cypherQ =  Cypher.newPersonsInIncubation();
-				else if( status == Person.status.ill) cypherQ =  Cypher.newPersonsIll();
-				else if( status == Person.status.immune) cypherQ =  Cypher.newPersonsImmune();				
+				if( status == Person.status.healthy) cypherQ = Cypher.idsFromNewPersonsHealthy();
+				else if( status == Person.status.inIncubation) cypherQ =  Cypher.idsFromNewPersonsInIncubation();
+				else if( status == Person.status.ill) cypherQ =  Cypher.idsFromNewPersonsIll();
+				else if( status == Person.status.immune) cypherQ =  Cypher.idsFromNewPersonsImmune();				
 				Result result = tx.run( cypherQ, new HashMap<String, Object>(Map.of("day", day)));
 				
 				while( result.hasNext()) {
@@ -391,9 +441,9 @@ public class Neo4j {
 	/*-----------------------------------------------------------------------------
 	 */
 	/** get all :CanInfect-relations */
-	public Vector<CanInfect> getAllCanInfects( Transaction tx) {
+	public Vector<CanInfect> getAllCanInfectsFromAllPersons( Transaction tx) {
 		Vector<CanInfect> canInfects = new Vector<CanInfect>();
-		String cypherQ = Cypher.getAllCanInfect();
+		String cypherQ = Cypher.getAllCanInfectsFromAllPersons();
 		Result result = tx.run( cypherQ);
 		canInfects = getCanInfectsFromResult( result);
 		return canInfects;
@@ -402,7 +452,7 @@ public class Neo4j {
 	Vector<CanInfect> getAllCanInfects() {
 		try( Session session = driver.session()) {
 			return session.readTransaction( tx -> {
-				return getAllCanInfects( tx);
+				return getAllCanInfectsFromAllPersons( tx);
 			});
 		}
 	}
@@ -433,28 +483,54 @@ public class Neo4j {
 		var persons = new Persons( readAllPersons());
 
 		// print number of persons (nodes in the database)
-		Utils.logging(String.format( "%d (%d) persons found, for example:", 
-		persons.getNumberPersons(), persons.getNumberPersons()));
+		if( Config.getPrintDBSatus() > 0) {
+			Utils.logging(String.format( "%d (%d) persons found, for example:", 
+			persons.getNumberPersons(), persons.getNumberPersons()));
+		
+			// print randomly 3 persons				
+			Utils.logging( persons.getPersonRandomly());
+			Utils.logging( persons.getPersonRandomly());
+			Utils.logging( persons.getPersonRandomly());
+		}
 
-		// print randomly 3 persons				
-		Utils.logging( persons.getPersonRandomly());
-		Utils.logging( persons.getPersonRandomly());
-		Utils.logging( persons.getPersonRandomly());
-
+		if( Config.getPrintDBSatus() == 2) {
+			try( Session session = driver.session()) {	
+				session.readTransaction(tx -> {		
+					// print number of CanInfect (relations in the database)
+					var canInfects = this.getAllCanInfectsFromAllPersons( tx);
+					Utils.logging( String.format("%d (%d) relations found, for example:",
+						canInfects.size(), this.getNumbPersonsWithCanInfects( tx)));
+					
+					// print randomly 3 CanInfect
+					for (int i = 1; i <= Math.min( 3, canInfects.size()); i++) {
+						Utils.logging( canInfects.elementAt(Utils.randomGetInt( 0, canInfects.size() - 1)));
+					}
+					return 1;
+				});
+			}
+		}
+	}
+	
+	public boolean neo4jPreparedForActiveCity() {
+		neo4jPreparedForActiveCity = true;
 		try( Session session = driver.session()) {	
-			session.readTransaction(tx -> {		
-				// print number of CanInfect (relations in the database)
-				var canInfects = this.getAllCanInfects( tx);
-				Utils.logging( String.format("%d (%d) relations found, for example:",
-					canInfects.size(), this.getNumbCanInfects( tx)));
+			session.readTransaction(tx -> {
+				int numbPersons = getCount( Cypher.numbPersons(), tx);
 				
-				// print randomly 3 CanInfect
-				for (int i = 1; i <= Math.min( 3, canInfects.size()); i++) {
-					Utils.logging( canInfects.elementAt(Utils.randomGetInt( 0, canInfects.size() - 1)));
-				}
+				Utils.logging( "DBConsistency: " +  
+					" numbPersons=" + numbPersons +
+					" numbPersonsWithActiveCity=" + getCount( Cypher.numbPersonsWithActiveCity(), tx) +
+					" numbNodesWithActiveCity=" +  getCount( Cypher.numbNodesWithActiveCity(), tx) +
+					" numbPersonsWithCanInfects=" + getNumbPersonsWithCanInfects());
+						
+				if( numbPersons == 0) neo4jPreparedForActiveCity = false;
+				else if( numbPersons != getCount( Cypher.numbPersonsWithActiveCity(), tx)) neo4jPreparedForActiveCity = false;
+				else if( numbPersons != getCount( Cypher.numbNodesWithActiveCity(), tx)) neo4jPreparedForActiveCity = false;
+				else if( numbPersons != getNumbPersonsWithCanInfects()) neo4jPreparedForActiveCity = false;
 				return 1;
 			});
 		}
+		return neo4jPreparedForActiveCity;
 	}
 
 	public Driver getDriver() {

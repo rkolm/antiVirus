@@ -73,6 +73,23 @@ public final class Config {
             return "true";
         }
     }
+    
+    
+    /** 
+     * @return dataset for simulation 
+     * */
+    public static int getAcceptCode() {
+        String accepts = getInstance().props.getProperty("run.accepts", "");
+        return !StringUtils.isNumeric( accepts) ? 5 : Math.max( 1, Math.min(10, Integer.valueOf( accepts)));
+    }
+    
+    /** 
+     * @return dataset for simulation 
+     * */
+    public static int getPrintDBSatus() {
+        String printDBSatus = getInstance().props.getProperty("run.printDBSatus", "");
+        return !StringUtils.isNumeric( printDBSatus) ? 0 : Math.max( 0, Math.min(2, Integer.valueOf( printDBSatus)));
+    }
 
     /**
      * @return Programstop after day

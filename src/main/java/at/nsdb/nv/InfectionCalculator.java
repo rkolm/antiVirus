@@ -37,7 +37,8 @@ public abstract class InfectionCalculator {
 	 * init: is there a connection due to distance? randomly calculated
 	 */
 	public static boolean canInfect( int distance) {
-		return Utils.randomGetDouble() < 1.0 / Math.pow( distance/500.0, 2.0);
+		if( distance < 35) return true; // ca 1 km
+		else return Utils.randomGetDouble() < Math.max( 0.001, Math.exp( -0.05 * distance));
 	}
 
 }

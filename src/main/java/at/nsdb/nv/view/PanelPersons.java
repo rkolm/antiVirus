@@ -111,17 +111,17 @@ public class PanelPersons extends JFrame {
 			g2.drawRect( paintType.getXPos(), paintType.getYPos(), 1, 1);
 		});
 		
-		
+		int numbRows = 44;
 		statistics.forEach( (day, statisticADay) -> {
-			if( (day >= 10) && (Math.floorMod( day, 2) == 0)) {
+			if( (day >= 1) && ((day % (statistics.size()/numbRows+1)) == 0)) {
 				g2.setColor( Color.black);
-				g2.drawString( String.format( "%d: R=%5.2f Q=%5.1f%%", 
+				g2.drawString( String.format( "%3d: R=%5.2f Q=%5.1f%%", 
 						day,  statisticADay.getR(), statisticADay.getQ()*100), 
-					(int)(panelWidth * 0.71), (day-9) * 6 + 12);
+					(int)(panelWidth * 0.71), (day / (statistics.size()/numbRows+1)) * 12 + 12);
 				
 				g2.setColor( Color.orange);
 				g2.fillRect( 
-					(int)(panelWidth * 0.82), (day-9) * 6, 
+					(int)(panelWidth * 0.82), (day / (statistics.size()/numbRows+1)) * 12, 
 					(int)( 0.18 * (panelWidth-1) * statisticADay.getQ()), 10);
 			}
 		});
@@ -147,7 +147,7 @@ public class PanelPersons extends JFrame {
 		statisticADay.setNewNumbPersonsIll( newIll.size());
 		statisticADay.setNewNumbPersonsImmune( newImmune.size());
 		
-		setTitle( statisticADay.getStatusString( day));
+		setTitle( Config.getPersonFilter() + " "  + statisticADay.getStatusString( day));
 		
 		this.getContentPane().validate();		
 		this.repaint();

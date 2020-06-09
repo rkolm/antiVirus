@@ -34,8 +34,8 @@ public class Persons {
 		return persons.get(index);
 	}
 	public Person getPersonRandomly() {
-		int i = Utils.randomGetInt( 0, persons.size()-1);
-		return persons.get(i);
+		int id = Utils.randomGetInt( 0, persons.size()-1);
+		return persons.get( id);
 	}
 	
 	

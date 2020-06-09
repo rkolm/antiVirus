@@ -36,21 +36,8 @@ public final class VirusSimulation {
 		//neo4j.setConstraint();
         neo4j.setIndexForPerson( );
         
-		Utils.logging("initialize biometric attributes for :Person-nodes");
-		neo4j.removeBiometricsFromAllPersons();
-		neo4j.addBiometricsToPersons();
-		neo4j.setBiometricValues();
-		
-		Utils.logging("remove all :HasInfected-relations ");
-        neo4j.removeAllHasInfectedRelations();
-        
-		Utils.logging("create :CanInfect-relations with distance");
-        neo4j.setCanInfectRelationsForAllPersons();
-        
-		Utils.logging( "---- initialization finished");
-
-		Utils.logging( "**** printing db status/content ...");
-		Neo4j.getInstance().printNeo4jContent();
+        // initalize labels, biometrics an relations if necessary
+        neo4j.init();
     }
 
     /** 
@@ -116,7 +103,7 @@ public final class VirusSimulation {
 		Utils.logging( "infect randomly 1 or 2 persons");
 		try (Session session = neo4j.getDriver().session()) {
 			session.writeTransaction(tx -> {
-				neo4j.deleteAllVarLabels( tx);
+				neo4j.removeAllVariableLabelsFromAllPersons( tx);
 				
 				// 1. person
 				long id = persons.getPersonRandomly().getId();
@@ -141,7 +128,9 @@ public final class VirusSimulation {
 		try (Session session = neo4j.getDriver().session()) {
 			session.writeTransaction(tx -> {
 				double quote = Math.max( Math.min( 1.0, 1-oldQuote), 0.5);
-				tx.run( Cypher.infectPersons(), parameters("day", day, "quote", quote));	
+				tx.run( Cypher.infectPersons(), parameters( 
+					"day", day, "quote", Math.exp( (quote-1)*8), 
+					"accept", 1.0 - Config.getAcceptCode()/100.0*0.9));
 				return 1;
 			});
 		}
@@ -152,7 +141,7 @@ public final class VirusSimulation {
 		var statisticADay = new StatisticADay();
 		try (Session session = neo4j.getDriver().session()) {
 			session.writeTransaction(tx -> {		
-				neo4j.deleteAllVarLabels( tx);
+				neo4j.removeAllVariableLabelsFromAllPersons( tx);
 				neo4j.setAllVarLabels( day, tx);
 
 				statisticADay.setNumbPersonsHealthy(neo4j.getNumbPersons(labelNameVar.Healthy, tx));

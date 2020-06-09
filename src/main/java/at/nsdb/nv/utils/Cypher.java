@@ -14,7 +14,7 @@ public class Cypher {
 		return ":auto USING PERIODIC COMMIT 10000" +
 					"LOAD CSV WITH HEADERS FROM 'file:///VirtualData50k.csv' as p" +
 					"FIELDTERMINATOR ';'" +
-					"CREATE( n:Person { " +
+					"CREATE( n { " +
 						"name:toString(p.name), " + 
 						"companyName:toString(p.companyName), " +
 						"address:toString(p.address), " +
@@ -40,10 +40,43 @@ public class Cypher {
 	}
 	*/
 	
+	/*-----------------------------------------------------------------------------
+	/*
+	/* initialization
+	/* 
+	/*-----------------------------------------------------------------------------
+	 */	
+
+	public static String numbNodesWithActiveCity() {
+		return	"MATCH (p) " +
+				"WHERE " + Config.getPersonFilter() + " " +
+				"RETURN count( p) as count";
+	}
+	public static String numbPersonsWithActiveCity() {
+		return	"MATCH (p:" + Constants.labelName.Person + ") " +
+				"WHERE " + Config.getPersonFilter() + " " +
+				"RETURN count( p) as count";
+	}
+	// set label Person to all nodes of active city
+	public static String setLabelPersonToChoosenNodes() {
+		String cypherQ =
+			"MATCH (p) " +
+			"WHERE " + Config.getPersonFilter() + " " +
+			"SET p:" + Constants.labelName.Person;
+		return cypherQ;
+	}
 	
+	
+	
+	/*-----------------------------------------------------------------------------
+	/*
+	/* biometrics
+	/* 
+	/*-----------------------------------------------------------------------------
+	 */	
 	/** remove biometric attributes from all nodes */
-	public static String removeBiometricAttributesFromAllPersons() {
-		return "MATCH( p:"+Constants.labelName.Person+") " +
+	public static String removeBiometricAttributesFromAllNodes() {
+		return "MATCH( p) " +
 			   "REMOVE p."+Constants.fieldName.illnessPeriod+", " +
 					  "p."+Constants.fieldName.incubationPeriod+", " +
 					  "p."+Constants.fieldName.dayOfInfection;
@@ -52,7 +85,7 @@ public class Cypher {
 	/** add biometric attributes to all persons */ 
 	public static String addBiometricAttributesToPersons() {
 		return "MATCH( p:"+Constants.labelName.Person+") " +
-			   "WHERE "+Config.getPersonFilter()+
+			   //"WHERE "+Config.getPersonFilter()+
 			   "SET p."+Constants.fieldName.illnessPeriod+" = 0," +
 				  " p."+Constants.fieldName.incubationPeriod+" = 0," +
 				  " p."+Constants.fieldName.dayOfInfection+" = 0";
@@ -83,19 +116,10 @@ public class Cypher {
 	/** get all persons */
 	public static String getAllPersons() {
 		return "MATCH (p:" +Constants.labelName.Person+") " +
-		       "WHERE "+Config.getPersonFilter()+
+		       //"WHERE "+Config.getPersonFilter()+
 			   " RETURN p";
 	}
 	
-	/** download all persons in incubation period. only persons in incubation period can infect */
-	public static String getAllPersonsInIncubation() {
-		return
-			"MATCH (p:"+Constants.labelName.Person+") " + 
-			"WHERE (p."+Constants.fieldName.dayOfInfection+" > 0) " +
-			 " AND (p."+Constants.fieldName.dayOfInfection+" <= $day) " +
-			 " AND ($day <= p."+Constants.fieldName.dayOfInfection+" + p."+Constants.fieldName.incubationPeriod+")" +
-			"RETURN p";
-	}
 	
 	/*-----------------------------------------------------------------------------
 	/*
@@ -104,18 +128,18 @@ public class Cypher {
 	/*-----------------------------------------------------------------------------
 	 */	
 	/** ids of persons, who are healthy */
-	public static String newPersonsHealthy() {
+	public static String idsFromNewPersonsHealthy() {
 		return 	"MATCH (p:" + Constants.labelNameVar.Healthy + ") " +
 				"RETURN id(p) as id";
 	}
 	/** ids of persons, who are new in incubation period */
-	public static String newPersonsInIncubation() {
+	public static String idsFromNewPersonsInIncubation() {
 		return	"MATCH (p:" + Constants.labelNameVar.InIncubation + ") " +
 				"WHERE p." + Constants.fieldName.dayOfInfection + " = $day " +
 				"RETURN id(p) as id";
 	}
 	/** ids of persons, who are new in ill period */
-	public static String newPersonsIll() {
+	public static String idsFromNewPersonsIll() {
 			return
 				"MATCH (p:" + Constants.labelNameVar.Ill.toString() + ") " +
 				"WHERE p." + Constants.fieldName.dayOfInfection.toString() + 
@@ -123,7 +147,7 @@ public class Cypher {
 				"RETURN id(p) as id";
 	}
 	/** ids of persons, who are new of immune (after illness) persons */
-	public static String newPersonsImmune() {
+	public static String idsFromNewPersonsImmune() {
 		return "MATCH (p:" + Constants.labelNameVar.Immune.toString() + ") " +
 				"WHERE p." + Constants.fieldName.dayOfInfection.toString() + 
 					" + p." + Constants.fieldName.incubationPeriod.toString() +
@@ -139,41 +163,42 @@ public class Cypher {
 	/*-----------------------------------------------------------------------------
 	 */	
 	/** download all relations (canInfect) */
-	public static String getAllCanInfect() {
+	public static String getAllCanInfectsFromAllPersons() {
 		return
 			"MATCH (p:"+Constants.labelName.Person+")-[c:"+Constants.relType.CanInfect+"]->(q:"+Constants.labelName.Person+") " +
 			"RETURN p, c, q";
 	}
 	
-	
 	/** get id2 and distance from all persons who can be infected */
 	public static String infectPersons() {
-		return "MATCH (p:"+Constants.labelName.Person+")-[c:"+Constants.relType.CanInfect+"]->(q:"+Constants.labelName.Person+") " +
-				"WHERE (q."+Constants.fieldName.dayOfInfection+" = 0) " +
+		String cypherQ =
+				"MATCH (p)-[c:"+Constants.relType.CanInfect+"]->(q) " +	
+				"WHERE p:"+Constants.labelName.Person + " AND q:"+Constants.labelName.Person+ " " +
+				"  AND (q."+Constants.fieldName.dayOfInfection+" = 0) " +
 				"  AND (p."+Constants.fieldName.dayOfInfection+" > 0) " +
 				"  AND (p."+Constants.fieldName.dayOfInfection+" <= $day) " +
 				"  AND ($day <= p."+Constants.fieldName.dayOfInfection+" + p."+Constants.fieldName.incubationPeriod+") " +
-				"WITH p, q, c."+Constants.relAttribute.distance+" AS dist, rand() AS r " +
-				"WHERE ((r < 0.01) OR (r < $quote * 1000.0 * 100.0 / dist / dist)) " +
+				"WITH p, q, c."+Constants.relAttribute.distance+" AS dist, rand() AS r, rand() AS r1, rand() AS r2 " +
+				"WHERE (r2 < $quote) AND (r1 < $accept) " +
+					"AND ((r < 0.002) OR (r < exp( -0.002 * dist))) " +
 				"set q."+Constants.fieldName.dayOfInfection+" = $day " +
 				"CREATE (p)-[:" + Constants.relTypeVar.HasInfected + 
 					" {" + Constants.relAttribute.day + ":$day}]->(q)";
+		return cypherQ;
 	}
 	
 	
 	/**
-	 * CypherQuery to remove all variable relations between 2 persons
+	 * CypherQuery to remove all variable relations between 2 nodes
 	 */	
-	public static String removeAllRelations( Constants.relTypeVar relType) {
+	public static String removeAllHasInfectedFromAllNodes( Constants.relTypeVar relType) {
 		return "MATCH ()-[m:"+relType+"]->() DELETE m";
 	}
-	
 	/**
-	 * CypherQuery create a canInfect- relation between 2 persons
-	 */
-	public static String createCanInfect( int id1, int id2, int distance) {
-		return	"MATCH (p:"+Constants.labelName.Person+" {id:"+id1+"}), (q:"+Constants.labelName.Person+" {id:"+id2+"}) " +
-				"CREATE (p)-[:"+Constants.relType.CanInfect+" {distance:"+distance+"}]->(q)";
+	 * CypherQuery to remove canInfect relations between 2 persons
+	 */	
+	public static String removeAllCanInfectFromAllNodes( Constants.relType relType) {
+		return "MATCH ()-[m:"+relType+"]->() DELETE m";
 	}
 	
 	
@@ -184,34 +209,15 @@ public class Cypher {
 	/* 
 	/*-----------------------------------------------------------------------------
 	 */	
+	
 	// number of persons over all in neo4J
 	public static String numbPersons() {
-		return	"MATCH (n:"+Constants.labelName.Person+") " +
-				"RETURN count(n) as count";
+		return	"MATCH (p:"+Constants.labelName.Person+") " +
+				"RETURN count(p) as count";
 	}
-
-	// number of persons with label
-	public static String numbPersonsWithLabel(Constants.labelNameVar labelName) {
-		return	"MATCH (p:" + labelName + ") " +
-				"RETURN count( p) as count";
-	}
-
-	// number of persons in incubation period
-	public static String numbPersonsInIncubation() {
-		return	"MATCH (p:" + Constants.labelNameVar.InIncubation + ") " +
-				"RETURN count( p) as count";
-	}
-	
-	// number of persons who are ill
-	public static String numbPersonsIll() {
-		return	"MATCH (p:" + Constants.labelNameVar.Ill + ") " +
-				"RETURN count( p) as count";
-	}
-	
-	// number of immune (after illness) persons
-	public static String numbPersonsImmune() {
-		return	"MATCH (p:" + Constants.labelNameVar.Immune + ") " +
-				"RETURN count( p) as count";
+	public static String numbPersonsWithLabelNameVar(Constants.labelNameVar labelNameVar) {
+		return	"MATCH (p:"+Constants.labelName.Person+":"+ labelNameVar +") " +
+				"RETURN count(p) as count";
 	}
 	
 	// number of immune (after illness) persons
@@ -222,10 +228,13 @@ public class Cypher {
 	}
 	
 	// number of relations (canInfect)
-	public static String numbCanInfects() {
-		return "MATCH (p)-[r:"+Constants.relType.CanInfect+"]->() " +
-			   " WHERE "+Config.getPersonFilter()+
-			   " RETURN count(r) as count";
+	public static String numbNodesWithCanInfects() {
+		return "MATCH (n)-[:"+Constants.relType.CanInfect+"]->() " +
+			   "RETURN count (distinct n) as count";
+	}
+	public static String numbPersonsWithCanInfects() {
+		return "MATCH (p:" + Constants.labelName.Person + ")-[:"+Constants.relType.CanInfect+"]->() " +
+			   "RETURN count( distinct p) as count";
 	}
 	
 	
@@ -237,8 +246,8 @@ public class Cypher {
 	/* 
 	/*-----------------------------------------------------------------------------
 	 */		
-	/** set node label to all :Persons who are healthy */
-	public static String setLabelHealthy() {
+	/** set node labelVar to all :Persons who are healthy */
+	public static String setPersonsToHealthy() {
 		String cypherQ =
 			"MATCH (p:" + Constants.labelName.Person + ") " +
 			"WHERE p." + Constants.fieldName.dayOfInfection + " = 0 " +
@@ -246,8 +255,8 @@ public class Cypher {
 		return cypherQ;
 	}
 	
-	/** set node label to all :Persons who are in incubation period */
-	public static String setLabelInIncubation() {
+	/** set node labelVar to all :Persons who are in incubation period */
+	public static String setPersonsToInIncubation() {
 		return
 			"MATCH (p:" + Constants.labelName.Person + ") " + 
 			"WHERE (p." + Constants.fieldName.dayOfInfection + " > 0) " +
@@ -257,8 +266,8 @@ public class Cypher {
 			"SET p: " + Constants.labelNameVar.InIncubation; 
 	}
 	
-	/** set node label to all :Persons who are ill */
-	public static String setLabelIll() {
+	/** set node labelVar to all :Persons who are ill */
+	public static String setPersonsToIll() {
 		return	
 			"MATCH (p:" + Constants.labelName.Person + ") " +
 			"WHERE (p." + Constants.fieldName.dayOfInfection + " > 0) " + 
@@ -270,8 +279,8 @@ public class Cypher {
 			"SET p: " + Constants.labelNameVar.Ill.toString();
 	}
 	
-	/** set node label to all :Persons who are immune */
-	public static String setLabelImmune() {
+	/** set node labelVar to all :Persons who are immune */
+	public static String setPersonsToImmune() {
 		return
 			"MATCH (p:" + Constants.labelName.Person + ") " +
 			"WHERE p." + Constants.fieldName.dayOfInfection + " > 0 " + 
@@ -290,7 +299,7 @@ public class Cypher {
 	}
 
 	/** set biometrics for a :Person */
-	public static String setBiometricsForPerson() {
+	public static String setBiometricsForOnePerson() {
 		return "MATCH (n:" + Constants.labelName.Person + ") " +
 				"WHERE id(n) = $id " +
 				"SET n." + Constants.fieldName.dayOfInfection + "= 0," +
@@ -299,9 +308,15 @@ public class Cypher {
 	}
 
 	/** remove a variable label from a :Person */
-	public static String deleteAllVariableLabels(labelNameVar labelName) {
+	public static String removeAllVariableLabelsFromAllPersons( labelNameVar labelName) {
 		return "MATCH (p:" + Constants.labelName.Person + ") " +
 				"REMOVE p:" + labelName;
+	}
+	
+	/** remove label :Person from all nodes  */
+	public static String removeLabelPersonFromAllNodes() {
+		return "MATCH (p) " +
+				"REMOVE p:" + Constants.labelName.Person;
 	}
 }
 	
