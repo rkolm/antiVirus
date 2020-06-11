@@ -97,10 +97,10 @@ public class Neo4j {
 			this.setBiometricValues();
 
 			this.setCanInfectRelationsForAllPersons();
-			if (Config.getExportRelations().equals("whenNew")) exportCanInfects();	
+			if (Config.getExportCanInfects().equals("whenNew")) exportCanInfects();	
 		}
 		
-		if (Config.getExportRelations().equals("always")) exportCanInfects();
+		if (Config.getExportCanInfects().equals("always")) exportCanInfects();
 		
 		Utils.logging( "---- initialization finished");
 		
@@ -268,23 +268,23 @@ public class Neo4j {
 	 * export :CanInfect-Relationsto csv
 	 */
 	private void exportCanInfects() {
-        Utils.logging( "exporting :CanInfect-relations to csv-file");
-        String fileName = Config.canInfectFileFullFileName();
-        if( fileName != "") {
-            try {   
-                // Open given file in append mode. 
-                BufferedWriter out = new BufferedWriter( new FileWriter(fileName)); 
-                out.write( CanInfect.toExportFileHeader()); out.newLine();
-                for( CanInfect m : getAllCanInfects()) {
-                    out.write( m.toExportFile()); out.newLine();
-                }
-                out.close(); 
-            } 
-            catch (IOException e) { 
-                System.out.println(" Error in writing export CanInfect.csv " + fileName + " " + e); 
-            } 
-        }	
-        Utils.logging( "exporting :CanInfect-relations finished");
+		String canInfectFileName = Config.getCanInfectFileName();
+		if (!canInfectFileName.isEmpty()) {
+			Utils.logging( "exporting :CanInfect-relations to " + canInfectFileName);
+			try {   
+				// Open given file in append mode. 
+				BufferedWriter out = new BufferedWriter( new FileWriter(canInfectFileName)); 
+				out.write( CanInfect.toExportFileHeader()); out.newLine();
+				for( CanInfect m : getAllCanInfects()) {
+					out.write( m.toExportFile()); out.newLine();
+				}
+				out.close(); 
+			} 
+			catch (IOException e) { 
+				System.out.println(" Error exporting :CanInfect-relations to " + canInfectFileName + " " + e); 
+			} 
+			Utils.logging( "exporting :CanInfect-relations finished");	
+		}
 	}
 
 	/**
