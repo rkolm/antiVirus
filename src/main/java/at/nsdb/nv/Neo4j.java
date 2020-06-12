@@ -43,6 +43,7 @@ public class Neo4j {
 	private int lookings = 0;
 	private boolean newCity;
 	private boolean neo4jPreparedForActiveCity;
+	private int x, y;
 
 	/** private constructor */
 	private Neo4j() {
@@ -75,12 +76,12 @@ public class Neo4j {
 		try (Session session = driver.session()) {
 			session.writeTransaction(tx -> {
 				if( newCity) {
-					Utils.logging( "reorganize labels Person");
+					Utils.logging( "reorganize labels :Person");
 					tx.run( Cypher.removeLabelPersonFromAllNodes());
 					tx.run( Cypher.setLabelPersonToChoosenNodes());
 					
 				} else {
-					Utils.logging( "set all Persons to healthy");
+					Utils.logging( "set all Persons to :Healthy");
 					tx.run( Cypher.setAllPersonsToHealthy());
 				}
 				return 1;
@@ -121,7 +122,7 @@ public class Neo4j {
 	
 	/** 
 	 * create missing db-constraints - neo4j creates an index for an constraint  
-	 *
+	 */
 	void setConstraint() {
 		try(Session session = getDriver().session()) {
 			session.run( Cypher.createConstraint());			
@@ -130,7 +131,7 @@ public class Neo4j {
 			return;
 		}
 		Utils.logging( "Constraint :Person(id) created");
-	}*/
+	}
 
 	/** 
 	 * create missing db-indices for the person node 
@@ -199,7 +200,8 @@ public class Neo4j {
 	 */
 	void setBiometricValues() {
 		var persons = new Persons(readAllPersons());
-		Utils.logging("setting biometric values for "+ persons.getAllPersons().size() +" persons ...");
+		Utils.logging("setting biometric values for "+ persons.getAllPersons().size() + " persons " +
+			" using Gauss-distribution ...");
 
 		try (Session session = driver.session()) {
 			session.writeTransaction(tx -> {
@@ -207,7 +209,6 @@ public class Neo4j {
 				// how to iterate a HashMap easily?
 				for (Person p : persons.getAllPersons()) {
 					p.setBiometrics();
-					//String cypherQ = Cypher.setBiometrics(p.getId(), p.getIncubationPeriod(), p.getIllnessPeriod());					
 					tx.run(Cypher.setBiometricsForOnePerson(),
 							parameters("id", p.getId(), 
 										"incubationPeriod", p.getIncubationPeriod(), 
@@ -221,48 +222,127 @@ public class Neo4j {
 		Utils.logging("setting biometric attributes finished");		
 	}
 	
+	
 	/**
 	 * set missing :CanInfect-relations for all :Person-nodes
 	 */
 	void setCanInfectRelationsForAllPersons() {        
-        Utils.logging( "creating :CanInfect-relations");  
+        Utils.logging( "adding :CanInfect relations using Gauss- distribution ...");  
         this.removeAllCanInfectFromAllNodes();
-        
+                
         final var relations = new HashSet<String>();
         final var persons = new Persons( readAllPersons());
-		
+        
+        // divided city in 100x100 sectors with the :Persons in a Vector
+        final int fieldSize = 100;
+        @SuppressWarnings("unchecked")
+        Vector<Person>[][] field = (Vector<Person>[][]) new Vector[fieldSize][fieldSize];
+        for( int xx=0; xx<fieldSize; xx++) {
+        	for( int yy=0; yy<fieldSize; yy++) {
+        		field[xx][yy] = new Vector<Person>();
+        	}
+        }
         for( Person p : persons.getAllPersons()) {
-            try( Session session = driver.session()) {
-                session.writeTransaction(tx -> {
-                    // every node (person) creates a number of relations :CanInfect
-                    int numbCanInfect = InfectionCalculator.calculateRandomlyNumbCanInfect();
-                    int startLookings = lookings;
-                    do {
-						Person q = persons.getPersonRandomly();
-                        lookings++;
-                        if( (p.getId() != q.getId()) && (! relations.contains( p.getId() + "-" + q.getId()))) {
-                            int distance = Math.max( 1, Person.distance( p, q));
-                            if( InfectionCalculator.canInfect( distance) || (lookings-startLookings)>50000) {
-                                tx.run( Cypher.addCanInfect(),
-                                    parameters("id1", p.getId(), "id2", q.getId(), "distance", distance));
-                                numbCanInfect--;
-                                relations.add( p.getId() + "-" + q.getId());
-                            }
-                        }
-                    } while( numbCanInfect > 0);
-                    nodesDone++;
-                    
-                    if( Math.floorMod( nodesDone, Math.min( 2500, (int)(persons.getNumberPersons() / 10))) == 0) {
-                        Utils.logging( String.format( 
-                            "%7d/%d, (%6.2f%%) persons, %7d CanInfect created, %7.1f Mio lookings", 
-                            nodesDone, persons.getNumberPersons(), 100.0 * nodesDone / persons.getNumberPersons(),
-                            relations.size(), lookings/1000000.0));
-                    }
-                    return 1;
-                });
-			}
+        	int xx = Math.max( 0, Math.min( fieldSize-1, 
+        		(int)( 100. * (p.getLongitude()-persons.getMinLongitude()) / persons.getLongitudeRange())));
+        	int yy = Math.max( 0, Math.min( fieldSize-1,
+        		(int)( 100 * (p.getLatitude()-persons.getMinLatitude()) / persons.getLatitudeRange())));
+        	field[xx][yy].add( p);
+        }
+		
+        for( int xx=0; xx<fieldSize; xx++) {
+        	for( int yy=0; yy<fieldSize; yy++) {
+        		x = xx; y = yy; // why Java, do I need an global x and y ???
+        		for( Person p : field[x][y]) {
+		            try( Session session = driver.session()) {
+		                session.writeTransaction(tx -> {
+		                    // every node (person) creates a number of relations :CanInfect
+		                    int numbCanInfect = InfectionCalculator.calculateRandomlyNumbCanInfect();
+		                    int startLookings = lookings;
+		                    do {
+		                    	lookings++;
+		                    	// select :CanInfect Person
+		                    	int xNew, yNew;
+		                    	if( Utils.randomGetDouble() < 0.5) {
+		                    		xNew = x; yNew = y;
+		                    	} else {
+			                    	int xDiff = Utils.randomGetGauss( -20, 20, 0, 1);
+			                    	xDiff += (lookings-startLookings)/100 * (xDiff < 0 ? -1 : 1);
+			                    	xNew = Math.min( fieldSize-1, Math.max( 0, Math.min( fieldSize-1,	x + xDiff)));
+			                    	int yDiff = Utils.randomGetGauss( -20, 20, 0, 1);
+			                    	yDiff += (lookings-startLookings)/100 * (yDiff < 0 ? -1 : 1);
+			                    	yNew = Math.min( fieldSize-1, Math.max( 0, Math.min( fieldSize-1,	y + yDiff)));
+		                    	}
+		                    	if( field[xNew][yNew].size() > 0) {
+									Person q = field[xNew][yNew].get( Utils.randomGetInt(0, field[xNew][yNew].size()-1));		                        lookings++;
+			                        if( ((p.getId() != q.getId()) && (! relations.contains( p.getId() + "-" + q.getId())))
+			                        	|| ((lookings-startLookings)>10000)) {
+			                            int distance = Math.max( 1, Person.distance( p, q));
+		                                tx.run( Cypher.addCanInfect(),
+		                                    parameters("id1", p.getId(), "id2", q.getId(), "distance", distance));
+		                                numbCanInfect--;
+		                                relations.add( p.getId() + "-" + q.getId());
+			                        }
+		                    	}
+		                    } while( numbCanInfect > 0);
+		                    nodesDone++;
+		                    
+		                    if( Math.floorMod( nodesDone, Math.min( 2500, (int)(persons.getNumberPersons() / 10))) == 0) {
+		                        Utils.logging( String.format( 
+		                            "%7d/%d, (%6.2f%%) persons, %7d CanInfect created, %7.1f Mio lookings", 
+		                            nodesDone, persons.getNumberPersons(), 100.0 * nodesDone / persons.getNumberPersons(),
+		                            relations.size(), lookings/1000000.0));
+		                    }
+		                    return 1;
+		                });
+					}
+        		}
+        	}
 		}
 	}
+	
+//	/**
+//	 * set missing :CanInfect-relations for all :Person-nodes
+//	 */
+//	void setCanInfectRelationsForAllPersons() {        
+//        Utils.logging( "creating :CanInfect-relations");  
+//        this.removeAllCanInfectFromAllNodes();
+//        
+//        final var relations = new HashSet<String>();
+//        final var persons = new Persons( readAllPersons());
+//		
+//        for( Person p : persons.getAllPersons()) {
+//            try( Session session = driver.session()) {
+//                session.writeTransaction(tx -> {
+//                    // every node (person) creates a number of relations :CanInfect
+//                    int numbCanInfect = InfectionCalculator.calculateRandomlyNumbCanInfect();
+//                    int startLookings = lookings;
+//                    do {
+//						Person q = persons.getPersonRandomly();
+//                        lookings++;
+//                        if( (p.getId() != q.getId()) && (! relations.contains( p.getId() + "-" + q.getId()))) {
+//                            int distance = Math.max( 1, Person.distance( p, q));
+//                            if( InfectionCalculator.canInfect( distance) || (lookings-startLookings)>50000) {
+//                                tx.run( Cypher.addCanInfect(),
+//                                    parameters("id1", p.getId(), "id2", q.getId(), "distance", distance));
+//                                numbCanInfect--;
+//                                relations.add( p.getId() + "-" + q.getId());
+//                            }
+//                        }
+//                    } while( numbCanInfect > 0);
+//                    nodesDone++;
+//                    
+//                    if( Math.floorMod( nodesDone, Math.min( 2500, (int)(persons.getNumberPersons() / 10))) == 0) {
+//                        Utils.logging( String.format( 
+//                            "%7d/%d, (%6.2f%%) persons, %7d CanInfect created, %7.1f Mio lookings", 
+//                            nodesDone, persons.getNumberPersons(), 100.0 * nodesDone / persons.getNumberPersons(),
+//                            relations.size(), lookings/1000000.0));
+//                    }
+//                    return 1;
+//                });
+//			}
+//		}
+//	}
 
 	/**
 	 * export :CanInfect-Relationsto csv
@@ -297,7 +377,7 @@ public class Neo4j {
 	 */
 	void setAllVarLabels( int day, Transaction tx) {
 		var params = parameters("day", day);
-		tx.run( Cypher.setPersonsToHealthy());		
+		tx.run( Cypher.setPersonsToHealthy());	
 		tx.run( Cypher.setPersonsToInIncubation(), params);
 		tx.run( Cypher.setPersonsToIll(), params);
 		tx.run( Cypher.setPersonsToImmune(), params);
@@ -324,8 +404,8 @@ public class Neo4j {
 	}
 	
 	/** how many :Persons with a given labelNameVar */
-	int getNumbPersons(Constants.labelNameVar label, Transaction tx) {
-		return getCount( Cypher.numbPersonsWithLabelNameVar(label), tx);
+	int getNumbPersons( Constants.labelNameVar label, Transaction tx) {
+		return getCount( Cypher.numbPersonsWithLabelNameVar( label), tx);
 	}
 	
 	/** how many :Persons with attribute attributeName */
@@ -354,7 +434,9 @@ public class Neo4j {
 	/** get count result */
 	private int getCount( String cypherQ, Transaction tx) {
 		Result result = tx.run( cypherQ);
-		return (int) (long) result.next().get( "count", Long.valueOf( 0));
+//		return (int) (long) result.next().get( "count", Long.valueOf( 0));
+		return result.single().get( 0 ).asInt();
+		
 	}
 	
 	

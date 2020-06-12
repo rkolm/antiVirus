@@ -80,7 +80,7 @@ public final class Config {
      * */
     public static int getAcceptCode() {
         String accepts = getInstance().props.getProperty("run.accepts", "");
-        return !StringUtils.isNumeric( accepts) ? 5 : Math.max( 1, Math.min(10, Integer.valueOf( accepts)));
+        return !StringUtils.isNumeric( accepts) ? 50 : Math.max( 1, Math.min( 100, Integer.valueOf( accepts)));
     }
     
     /** 

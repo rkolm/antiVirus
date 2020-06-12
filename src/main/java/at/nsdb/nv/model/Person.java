@@ -53,8 +53,8 @@ public class Person {
 	 */	
 	public static int distance( Person p1, Person p2) {
 		return (int) ( Math.sqrt( 
-			Math.pow( p1.getLongitudeSec() - p2.getLongitudeSec(), 2)  +
-			Math.pow( p1.getLatitudeSec()  - p2.getLatitudeSec(),  2)) / 60 * 1852);
+			Math.pow( p1.getLongitude() - p2.getLongitude(), 2)  +
+			Math.pow( p1.getLatitude()  - p2.getLatitude(),  2)) * 60 * 1852);
 	}
 	
 	
@@ -136,10 +136,6 @@ public class Person {
 	public double getLongitude() {
 		return longitude;
 	}
-	/** longitude - unit [seconds] */
-	public int getLongitudeSec() {
-		return (int) (longitude * 3600);
-	}
 
 	public void setLongitude(double longitude) {
 		this.longitude = longitude;
@@ -148,10 +144,6 @@ public class Person {
 	/** latitude - unit [degree] */
 	public double getLatitude() {
 		return latitude;
-	}
-	/** latitude - unit [seconds] */
-	public int getLatitudeSec() {
-		return (int) (latitude * 3600);
 	}
 
 	public void setLatitude(double latitude) {
