@@ -9,20 +9,19 @@ import at.nsdb.nv.utils.Utils;
  */
 public class Persons {
 	private Vector<Person> persons;
-	private int minLongitude = Integer.MAX_VALUE;
-	private int maxLongitude = Integer.MIN_VALUE;
-	private int minLatitude = Integer.MAX_VALUE;
-	private int maxLatitude = Integer.MIN_VALUE;
-	
+	private double minLongitude = 1000.0;
+	private double maxLongitude = -1000.0;
+	private double minLatitude = 1000.0;
+	private double maxLatitude = -1000.0;
 	
 		
 	public Persons( Vector<Person> persons) {
 		this.persons= persons;
 		for( Person p : persons) {
-			if( p.getLongitudeSec() < minLongitude) minLongitude = p.getLongitudeSec();
-			if( p.getLongitudeSec() > maxLongitude) maxLongitude = p.getLongitudeSec();
-			if( p.getLatitudeSec() < minLatitude) minLatitude = p.getLatitudeSec();
-			if( p.getLatitudeSec() > maxLatitude) maxLatitude = p.getLatitudeSec();
+			minLongitude = Math.min( minLongitude, p.getLongitude());
+			maxLongitude = Math.max( maxLongitude, p.getLongitude());
+			minLatitude = Math.min( minLatitude, p.getLatitude());
+			maxLatitude = Math.max( maxLatitude, p.getLatitude());
 		}
 	}
 
@@ -43,17 +42,24 @@ public class Persons {
 		return persons;
 	}
 
-	public int getMinLongitude() {
+	public double getMinLongitude() {
 		return minLongitude;
 	}
-	public int getMaxLongitude() {
+	public double getMaxLongitude() {
 		return maxLongitude;
 	}
-	public int getMinLatitude() {
+	public double getLongitudeRange() {
+		return maxLongitude - minLongitude;
+	}
+	
+	public double getMinLatitude() {
 		return minLatitude;
 	}
-	public int getMaxLatitude() {
+	public double getMaxLatitude() {
 		return maxLatitude;
+	}
+	public double getLatitudeRange() {
+		return maxLatitude - minLatitude;
 	}
 
 

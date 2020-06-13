@@ -33,7 +33,7 @@ public final class VirusSimulation {
 		Utils.logging( "**** initialization ...");
         
         Utils.logging("checking indexes");
-		//neo4j.setConstraint();
+		neo4j.setConstraint();
         neo4j.setIndexForPerson( );
         
         // initalize labels, biometrics an relations if necessary
@@ -110,10 +110,10 @@ public final class VirusSimulation {
 				tx.run(Cypher.infectAPerson(), parameters("id", id, "day", day));
 				Utils.logging( "id " + id + " infected on day 1");
 
-				// 2. person
-				id = persons.getPersonRandomly().getId();
-				tx.run(Cypher.infectAPerson(), parameters("id", id, "day", day));
-				Utils.logging( "id " + id + " infected on day 1");
+//				// 2. person
+//				id = persons.getPersonRandomly().getId();
+//				tx.run(Cypher.infectAPerson(), parameters("id", id, "day", day));
+//				Utils.logging( "id " + id + " infected on day 1");
 				return 1;
 			});
 		}
@@ -128,9 +128,10 @@ public final class VirusSimulation {
 		try (Session session = neo4j.getDriver().session()) {
 			session.writeTransaction(tx -> {
 				double quote = Math.max( Math.min( 1.0, 1-oldQuote), 0.5);
+				quote = Math.exp( (quote-1)*8);
+				double accepts = Math.max( 0.01, 0.5 - Config.getAcceptCode()/100.0*0.5);
 				tx.run( Cypher.infectPersons(), parameters( 
-					"day", day, "quote", Math.exp( (quote-1)*8), 
-					"accept", 1.0 - Config.getAcceptCode()/100.0*0.9));
+					"day", day, "quote", quote,	"accept", accepts));
 				return 1;
 			});
 		}
@@ -144,10 +145,10 @@ public final class VirusSimulation {
 				neo4j.removeAllVariableLabelsFromAllPersons( tx);
 				neo4j.setAllVarLabels( day, tx);
 
-				statisticADay.setNumbPersonsHealthy(neo4j.getNumbPersons(labelNameVar.Healthy, tx));
-				statisticADay.setNumbPersonsInIncubation(neo4j.getNumbPersons(labelNameVar.InIncubation, tx));
-				statisticADay.setNumbPersonsIll(neo4j.getNumbPersons(labelNameVar.Ill, tx));
-				statisticADay.setNumbPersonsImmune(neo4j.getNumbPersons(labelNameVar.Immune, tx));
+				statisticADay.setNumbPersonsHealthy( neo4j.getNumbPersons(labelNameVar.Healthy, tx));
+				statisticADay.setNumbPersonsInIncubation( neo4j.getNumbPersons(labelNameVar.InIncubation, tx));
+				statisticADay.setNumbPersonsIll( neo4j.getNumbPersons(labelNameVar.Ill, tx));
+				statisticADay.setNumbPersonsImmune( neo4j.getNumbPersons(labelNameVar.Immune, tx));
 				return 1;
 			});
 		}

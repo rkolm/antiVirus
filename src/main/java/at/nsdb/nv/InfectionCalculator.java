@@ -38,7 +38,7 @@ public abstract class InfectionCalculator {
 	 */
 	public static boolean canInfect( int distance) {
 		if( distance < 35) return true; // ca 1 km
-		else return Utils.randomGetDouble() < Math.max( 0.001, Math.exp( -0.05 * distance));
+		else return Utils.randomGetDouble() < Math.max( 0.0001, Math.exp( -0.01 * distance));
 	}
 
 }

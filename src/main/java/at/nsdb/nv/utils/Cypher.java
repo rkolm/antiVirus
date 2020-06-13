@@ -33,12 +33,11 @@ public class Cypher {
 	}
 
 	
-	/** create constraint and index for Person.id 	
+	/** create constraint and index for Person.id */	
 	public static String createConstraint() {
 		return "CREATE CONSTRAINT ON (p:"+Constants.labelName.Person+") " +
 			   "ASSERT p."+Constants.fieldName.id+" IS UNIQUE";
 	}
-	*/
 	
 	/*-----------------------------------------------------------------------------
 	/*
@@ -85,7 +84,6 @@ public class Cypher {
 	/** add biometric attributes to all persons */ 
 	public static String addBiometricAttributesToPersons() {
 		return "MATCH( p:"+Constants.labelName.Person+") " +
-			   //"WHERE "+Config.getPersonFilter()+
 			   "SET p."+Constants.fieldName.illnessPeriod+" = 0," +
 				  " p."+Constants.fieldName.incubationPeriod+" = 0," +
 				  " p."+Constants.fieldName.dayOfInfection+" = 0";
@@ -116,7 +114,6 @@ public class Cypher {
 	/** get all persons */
 	public static String getAllPersons() {
 		return "MATCH (p:" +Constants.labelName.Person+") " +
-		       //"WHERE "+Config.getPersonFilter()+
 			   " RETURN p";
 	}
 	
@@ -170,20 +167,22 @@ public class Cypher {
 	}
 	
 	/** get id2 and distance from all persons who can be infected */
-	public static String infectPersons() {
+	public static String infectPersons() {		
 		String cypherQ =
-				"MATCH (p)-[c:"+Constants.relType.CanInfect+"]->(q) " +	
-				"WHERE p:"+Constants.labelName.Person + " AND q:"+Constants.labelName.Person+ " " +
-				"  AND (q."+Constants.fieldName.dayOfInfection+" = 0) " +
-				"  AND (p."+Constants.fieldName.dayOfInfection+" > 0) " +
-				"  AND (p."+Constants.fieldName.dayOfInfection+" <= $day) " +
-				"  AND ($day <= p."+Constants.fieldName.dayOfInfection+" + p."+Constants.fieldName.incubationPeriod+") " +
-				"WITH p, q, c."+Constants.relAttribute.distance+" AS dist, rand() AS r, rand() AS r1, rand() AS r2 " +
-				"WHERE (r2 < $quote) AND (r1 < $accept) " +
-					"AND ((r < 0.002) OR (r < exp( -0.002 * dist))) " +
-				"set q."+Constants.fieldName.dayOfInfection+" = $day " +
-				"CREATE (p)-[:" + Constants.relTypeVar.HasInfected + 
-					" {" + Constants.relAttribute.day + ":$day}]->(q)";
+		"MATCH (p)-[c:"+Constants.relType.CanInfect+"]->(q) " +	
+		"WHERE p:"+Constants.labelName.Person + " AND q:"+Constants.labelName.Person+ " " +
+		"  AND (q."+Constants.fieldName.dayOfInfection+" = 0) " +
+		"  AND (p."+Constants.fieldName.dayOfInfection+" > 0) " +
+		"  AND (p."+Constants.fieldName.dayOfInfection+" <= $day) " +
+		"  AND ($day <= p."+Constants.fieldName.dayOfInfection+" + p."+Constants.fieldName.incubationPeriod+") " +
+		"WITH p, q, c."+Constants.relAttribute.distance+" AS dist, rand() AS r, rand() AS r1, rand() AS r2 " +
+		"WHERE (r2 < $quote) AND (r1 < $accept) " +
+			"AND ((r < 0.002) OR (r < exp( -0.1 * dist / 1000))) " +
+		"set q."+Constants.fieldName.dayOfInfection+" = $day " +
+		"CREATE (p)-[:" + Constants.relTypeVar.HasInfected + 
+			" {" + Constants.relAttribute.day + ":$day}]->(q)";
+		
+
 		return cypherQ;
 	}
 	
@@ -216,7 +215,9 @@ public class Cypher {
 				"RETURN count(p) as count";
 	}
 	public static String numbPersonsWithLabelNameVar(Constants.labelNameVar labelNameVar) {
-		return	"MATCH (p:"+Constants.labelName.Person+":"+ labelNameVar +") " +
+//		return	"MATCH (p:"+Constants.labelName.Person+":"+ labelNameVar +") " +
+		return	"MATCH (p) " +
+				"WHERE (p:"+Constants.labelName.Person+") AND (p:"+labelNameVar+") " +
 				"RETURN count(p) as count";
 	}
 	
@@ -291,11 +292,14 @@ public class Cypher {
 	}
 
 	/** add relation :CanInfect between two persons */
-	public static String addCanInfect() {
-		return "MATCH (p:" + Constants.labelName.Person + "), (q:" + Constants.labelName.Person + ") " +
-				"WHERE id(p) = $id1 AND id(q) = $id2 " +
-				"CREATE (p)-[:" + Constants.relType.CanInfect + 
-				             " {" + Constants.relAttribute.distance + ":$distance}]->(q)";
+	public static String addCanInfect() {		
+		String cypherQ = "MATCH (p), (q) " +
+			"WHERE id(p) = $id1 AND id(q) = $id2 " +
+			"CREATE (p)-[:" + Constants.relType.CanInfect + 
+		     	" {" + Constants.relAttribute.distance + ":$distance}]->(q)";
+
+		return cypherQ;
+
 	}
 
 	/** set biometrics for a :Person */
