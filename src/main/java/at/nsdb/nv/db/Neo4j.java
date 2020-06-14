@@ -15,7 +15,9 @@ import org.neo4j.driver.Record;
 import org.neo4j.driver.Result;
 import org.neo4j.driver.Session;
 import org.neo4j.driver.Transaction;
+import org.neo4j.driver.Value;
 import org.neo4j.driver.types.Node;
+import org.neo4j.driver.types.Path;
 import org.neo4j.driver.types.Relationship;
 import org.neo4j.driver.exceptions.ClientException;
 
@@ -618,6 +620,33 @@ public class Neo4j {
 
 	public Driver getDriver() {
 		return driver;
+	}
+
+	/**
+	 * print the longest infection-path
+	 */
+	public void printLongestInfectionPath() {
+		String cypherQ = 
+			"MATCH (p:"+Constants.labelName.Person+") " +
+			"WITH max(p.dayOfInfection) as lastDayOfInfection " +
+			"MATCH path = ()-[:HasInfected*]->(endNode:Person) " +
+			"WHERE endNode.dayOfInfection = lastDayOfInfection " +
+			"RETURN path";
+		try( Session session = driver.session()) {	
+			session.readTransaction(tx -> {
+				Result result = tx.run( cypherQ);
+				Value value = null;
+				while( result.hasNext()) {
+					Record record = result.next();
+					value = record.get("path");
+				}
+				Path path = value.asPath();
+				Utils.logging("LongestInfectionPath: from id(" + path.start().id() + ") to id(" + path.end().id() + 
+								") with " + path.length() + " [:HasInfected-relationships]");
+				//Utils.logging(path);
+				return 1;
+			}); 
+		}
 	}
 			
 }

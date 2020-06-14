@@ -80,6 +80,11 @@ public final class VirusSimulation {
 		 * last statistics
 		 */
 		new PanelStatistics( statistics).repaint();
+
+		/**
+		 * print the longest infection path
+		 */
+		neo4j.printLongestInfectionPath();
     }
 
     
