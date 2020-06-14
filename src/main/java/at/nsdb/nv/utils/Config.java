@@ -1,9 +1,7 @@
-package at.nsdb.nv;
+package at.nsdb.nv.utils;
 
 import java.io.IOException;
 import java.util.Properties;
-
-import at.nsdb.nv.utils.Utils;
 
 /**
  * singleton to access configuration values for the application

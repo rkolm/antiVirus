@@ -1,4 +1,4 @@
-package at.nsdb.nv;
+package at.nsdb.nv.db;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -24,8 +24,9 @@ import static org.neo4j.driver.Values.parameters;
 import at.nsdb.nv.model.CanInfect;
 import at.nsdb.nv.model.Person;
 import at.nsdb.nv.model.Persons;
+import at.nsdb.nv.utils.Config;
 import at.nsdb.nv.utils.Constants;
-import at.nsdb.nv.utils.Cypher;
+import at.nsdb.nv.utils.InfectionCalculator;
 import at.nsdb.nv.utils.Utils;
 import at.nsdb.nv.utils.Constants.fieldName;
 
@@ -114,7 +115,7 @@ public class Neo4j {
 	 * delete all variable node-labels
 	 * @param tx Transaction
 	 */
-	void removeAllVariableLabelsFromAllPersons( Transaction tx) {
+	public void removeAllVariableLabelsFromAllPersons( Transaction tx) {
 		for( Constants.labelNameVar n : Constants.labelNameVar.values()) {
 			tx.run(Cypher.removeAllVariableLabelsFromAllPersons( n));
 		}
@@ -123,7 +124,7 @@ public class Neo4j {
 	/** 
 	 * create missing db-constraints - neo4j creates an index for an constraint  
 	 */
-	void setConstraint() {
+	public void setConstraint() {
 		try(Session session = getDriver().session()) {
 			session.run( Cypher.createConstraint());			
 		} catch(ClientException e) { // neo4j driver does not raise the exception until the session is closed! 
@@ -136,7 +137,7 @@ public class Neo4j {
 	/** 
 	 * create missing db-indices for the person node 
 	 */
-	void setIndexForPerson( ) {		// index for attribute dayOfInfection and incubationPeriod
+	public void setIndexForPerson( ) {		// index for attribute dayOfInfection and incubationPeriod
 		for( String attributeName : new String[] {Constants.fieldName.dayOfInfection.toString(),
 			Constants.fieldName.incubationPeriod.toString()}) {
 				try (Session session = getDriver().session()) {
@@ -375,7 +376,7 @@ public class Neo4j {
 	 * @param day Day
 	 * @param tx Transaction
 	 */
-	void setAllVarLabels( int day, Transaction tx) {
+	public void setAllVarLabels( int day, Transaction tx) {
 		var params = parameters("day", day);
 		tx.run( Cypher.setPersonsToHealthy());	
 		tx.run( Cypher.setPersonsToInIncubation(), params);
@@ -404,7 +405,7 @@ public class Neo4j {
 	}
 	
 	/** how many :Persons with a given labelNameVar */
-	int getNumbPersons( Constants.labelNameVar label, Transaction tx) {
+	public int getNumbPersons( Constants.labelNameVar label, Transaction tx) {
 		return getCount( Cypher.numbPersonsWithLabelNameVar( label), tx);
 	}
 	
@@ -449,7 +450,7 @@ public class Neo4j {
 	/*-----------------------------------------------------------------------------
 	 */
 	/** read all persons from db */ 
-	Vector<Person> readAllPersons() {
+	public Vector<Person> readAllPersons() {
 		try(Session session = driver.session()) {
 			return session.readTransaction(tx -> {
 				// download all nodes

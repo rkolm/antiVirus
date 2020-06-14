@@ -1,5 +1,6 @@
 package at.nsdb.nv;
 
+import at.nsdb.nv.utils.Config;
 import at.nsdb.nv.utils.Utils;
 
 /** main-class */

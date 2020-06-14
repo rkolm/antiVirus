@@ -9,8 +9,6 @@ import java.util.Date;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-import at.nsdb.nv.Config;
-
 
 /*--------------------
  * some utilities
