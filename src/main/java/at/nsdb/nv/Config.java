@@ -63,13 +63,7 @@ public final class Config {
      * @return dataset for simulation 
      * */
     public static String getPersonFilter() {
-
-        String personFilter = getInstance().props.getProperty("run.personFilter", "");
-		if (!personFilter.isEmpty()) {
-            return personFilter;
-        } else {
-            return "true";
-        }
+        return getInstance().props.getProperty("run.personFilter", "true");
     }
     
     
@@ -84,9 +78,9 @@ public final class Config {
     /** 
      * @return dataset for simulation 
      * */
-    public static int getPrintDBSatus() {
-        String printDBSatus = getInstance().props.getProperty("run.printDBSatus");
-        return printDBSatus == null ? 0 : Math.max( 0, Math.min(2, Integer.valueOf( printDBSatus)));
+    public static int getPrintDBStatus() {
+        String printDBStatus = getInstance().props.getProperty("run.printDBStatus");
+        return printDBStatus == null ? 0 : Math.max( 0, Math.min(2, Integer.valueOf( printDBStatus)));
     }
 
     /**

@@ -565,7 +565,7 @@ public class Neo4j {
 		var persons = new Persons( readAllPersons());
 
 		// print number of persons (nodes in the database)
-		if( Config.getPrintDBSatus() > 0) {
+		if( Config.getPrintDBStatus() > 0) {
 			Utils.logging(String.format( "%d (%d) persons found, for example:", 
 			persons.getNumberPersons(), persons.getNumberPersons()));
 		
@@ -575,7 +575,7 @@ public class Neo4j {
 			Utils.logging( persons.getPersonRandomly());
 		}
 
-		if( Config.getPrintDBSatus() == 2) {
+		if( Config.getPrintDBStatus() == 2) {
 			try( Session session = driver.session()) {	
 				session.readTransaction(tx -> {		
 					// print number of CanInfect (relations in the database)
