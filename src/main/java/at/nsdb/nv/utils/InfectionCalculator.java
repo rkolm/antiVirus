@@ -1,6 +1,4 @@
-package at.nsdb.nv;
-
-import at.nsdb.nv.utils.Utils;
+package at.nsdb.nv.utils;
 
 public abstract class InfectionCalculator {
 	

@@ -7,9 +7,11 @@ import org.neo4j.driver.Session;
 import static org.neo4j.driver.Values.parameters;
 import static at.nsdb.nv.utils.Constants.labelNameVar;
 
+import at.nsdb.nv.db.Cypher;
+import at.nsdb.nv.db.Neo4j;
 import at.nsdb.nv.model.Persons;
 import at.nsdb.nv.model.StatisticADay;
-import at.nsdb.nv.utils.Cypher;
+import at.nsdb.nv.utils.Config;
 import at.nsdb.nv.utils.Utils;
 import at.nsdb.nv.view.PanelPersons;
 import at.nsdb.nv.view.PanelStatistics;

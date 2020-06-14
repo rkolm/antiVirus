@@ -6,8 +6,8 @@
 	<name>VirusSimulationNeo4j</name>
 	<description>
 		PS-Projekt PS NSDB
-		Simulation Virus-Ausbreitung
-		Datenbasis sind Adressinformation in einer Neo4j-Datenbank	
+		simulation of virus-spreading
+		processes geo-spatial data in a Neo4j-database	
 	</description>
 
 	<properties>
@@ -17,47 +17,45 @@
 	</properties>
 		
 	<dependencies>	
-		<!-- -->
+		<!-- database driver to access Neo4j -->
 		<dependency>
         	<groupId>org.neo4j.driver</groupId>
         	<artifactId>neo4j-java-driver</artifactId>
         	<version>4.0.1</version>
     	</dependency>
-    	<!-- -->
-	
-		<dependency>
-			<groupId>org.neo4j</groupId>
-			<artifactId>neo4j</artifactId>
-			<version>4.0.3</version>
-		</dependency>
 		
-		<!--
-		<dependency>
-			<groupId>org.neo4j</groupId>
-			<artifactId>neo4j-kernel</artifactId>
-			<version>4.0.3</version>
-		</dependency>
-		-->
-		
-		<!-- https://mvnrepository.com/artifact/org.neo4j/neo4j-graph-algo -->
-		<!-- -->
-		<dependency>
-    		<groupId>org.neo4j</groupId>
-    		<artifactId>neo4j-graph-algo</artifactId>
-    		<version>3.5.11</version>
-		</dependency>
-		<!-- -->
-		
-		<!-- https://mvnrepository.com/artifact/org.neo4j/neo4j-tools -->
-		<!--
-		<dependency>
-    		<groupId>org.neo4j.driver</groupId>
-        	<artifactId>neo4j-tools</artifactId>
-    		<version>4.0.0</version>
-		</dependency>
-		-->
-		
-		
-	<!-- Thanks for using https://jar-download.com -->
 	</dependencies>
+
+	<build>
+		<plugins>
+			<!-- assamble all dependencies and build an executable fat JAR -->
+	        <plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>3.3.0</version>
+				<configuration>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+ 			        <archive>
+						<manifest>
+							<addClasspath>true</addClasspath>
+							<classpathPrefix>lib/</classpathPrefix>
+							<mainClass>at.nsdb.nv.Main</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+				<executions>
+					<execution>
+						<id>assemble-all</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+		</plugins>
+	</build>
 </project>

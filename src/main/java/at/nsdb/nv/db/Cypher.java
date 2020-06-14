@@ -1,6 +1,7 @@
-package at.nsdb.nv.utils;
+package at.nsdb.nv.db;
 
-import at.nsdb.nv.Config;
+import at.nsdb.nv.utils.Config;
+import at.nsdb.nv.utils.Constants;
 import at.nsdb.nv.utils.Constants.fieldName;
 import at.nsdb.nv.utils.Constants.labelNameVar;
 

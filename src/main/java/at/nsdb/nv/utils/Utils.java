@@ -9,8 +9,6 @@ import java.util.Date;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-import at.nsdb.nv.Config;
-
 
 /*--------------------
  * some utilities
@@ -72,8 +70,8 @@ public abstract class Utils {
 	    if( o.toString().startsWith( "****")) s = "\n" + s;
 	    System.out.println( s);
 	    
-		String fileName = Config.getLogFileFullName();
-	    if( fileName != "") {
+		String fileName = Config.getLogFileName();
+	    if(!fileName.isEmpty()) {
 	        try {   
 	            // Open given file in append mode. 
 	            BufferedWriter out = new BufferedWriter( new FileWriter(fileName, true)); 

@@ -14,11 +14,11 @@ import java.util.Vector;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import at.nsdb.nv.Config;
-import at.nsdb.nv.Neo4j;
+import at.nsdb.nv.db.Neo4j;
 import at.nsdb.nv.model.Person;
 import at.nsdb.nv.model.Persons;
 import at.nsdb.nv.model.StatisticADay;
+import at.nsdb.nv.utils.Config;
 import at.nsdb.nv.utils.Utils;
 
 public class PanelPersons extends JFrame {

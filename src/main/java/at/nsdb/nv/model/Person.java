@@ -1,6 +1,6 @@
 package at.nsdb.nv.model;
 
-import at.nsdb.nv.InfectionCalculator;
+import at.nsdb.nv.utils.InfectionCalculator;
 
 public class Person {
 	

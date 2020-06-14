@@ -1,11 +1,7 @@
-package at.nsdb.nv;
+package at.nsdb.nv.utils;
 
 import java.io.IOException;
 import java.util.Properties;
-
-import org.apache.commons.lang3.StringUtils;
-
-import at.nsdb.nv.utils.Utils;
 
 /**
  * singleton to access configuration values for the application
@@ -65,13 +61,7 @@ public final class Config {
      * @return dataset for simulation 
      * */
     public static String getPersonFilter() {
-
-        String personFilter = getInstance().props.getProperty("run.personFilter", "");
-		if (!personFilter.isEmpty()) {
-            return personFilter;
-        } else {
-            return "true";
-        }
+        return getInstance().props.getProperty("run.personFilter", "true");
     }
     
     
@@ -79,16 +69,16 @@ public final class Config {
      * @return dataset for simulation 
      * */
     public static int getAcceptCode() {
-        String accepts = getInstance().props.getProperty("run.accepts", "");
-        return !StringUtils.isNumeric( accepts) ? 50 : Math.max( 1, Math.min( 100, Integer.valueOf( accepts)));
+        String accepts = getInstance().props.getProperty("run.accepts");
+        return accepts == null ? 50 : Math.max( 1, Math.min( 100, Integer.valueOf( accepts)));
     }
     
     /** 
      * @return dataset for simulation 
      * */
-    public static int getPrintDBSatus() {
-        String printDBSatus = getInstance().props.getProperty("run.printDBSatus", "");
-        return !StringUtils.isNumeric( printDBSatus) ? 0 : Math.max( 0, Math.min(2, Integer.valueOf( printDBSatus)));
+    public static int getPrintDBStatus() {
+        String printDBStatus = getInstance().props.getProperty("run.printDBStatus");
+        return printDBStatus == null ? 0 : Math.max( 0, Math.min(2, Integer.valueOf( printDBStatus)));
     }
 
     /**
@@ -96,14 +86,14 @@ public final class Config {
      */
     public static int getStopAfterDay() {
         String stopAfterDay = getInstance().props.getProperty("run.stopAfterDay");
-        return !StringUtils.isNumeric(stopAfterDay) ? 365 : Integer.valueOf(stopAfterDay);
+        return stopAfterDay == null ? 365 : Integer.valueOf(stopAfterDay);
     }
 
      /**
      * @return export relations
      */
-    public static String getExportRelations() {
-        return getInstance().props.getProperty("run.exportRelations", "whenNew");
+    public static String getExportCanInfects() {
+        return getInstance().props.getProperty("run.export.canInfects", "whenNew");
     }
 
     /** 
@@ -161,35 +151,15 @@ public final class Config {
      * @return file-name for logging
      */
 	public static String getLogFileName() {        
-        String logFile = getInstance().props.getProperty("run.logFile");
-		return StringUtils.isEmpty(logFile) ? "" : logFile;
+        return getInstance().props.getProperty("run.logFile", "");
+    }
+
+    /**
+     * @return CSV-file-name for export of :CanInfect-relations
+     */
+    public static String getCanInfectFileName() {        
+        return getInstance().props.getProperty("run.export.canInfectFile", "canInfect.csv");
     }
     
-    /**
-     * 
-     * @return file-name (with path) for logging
-     */
-	public static String getLogFileFullName() {
-        
-        String logFile = getLogFileName();
-		if( StringUtils.isEmpty(logFile)) return "";
-		else {
-			String projectDirectory = System.getProperty("user.dir");
-			return projectDirectory.substring( 0, projectDirectory.lastIndexOf( "\\") + 1) + logFile;
-		}
-	}
-
-	/** if :CanInfect created -> export to .csv */
-	public static String canInfectFileFullFileName() {
-		if( getLogFileName() == "") return "";
-		else {
-			String projectDirectory = System.getProperty("user.dir");
-			return projectDirectory.substring( 0, projectDirectory.lastIndexOf( "\\") + 1) + "canInfect.csv";
-		}
-	}
-    
-
-    
-
     
 }
