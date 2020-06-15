@@ -35,7 +35,6 @@ public final class VirusSimulation {
 		Utils.logging( "**** initialization ...");
         
         Utils.logging("checking indexes");
-		neo4j.setConstraint();
         neo4j.setIndexForPerson( );
         
         // initalize labels, biometrics an relations if necessary

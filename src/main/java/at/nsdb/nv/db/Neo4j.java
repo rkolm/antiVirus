@@ -78,6 +78,7 @@ public class Neo4j {
 		//new city?
 		try (Session session = driver.session()) {
 			session.writeTransaction(tx -> {
+				this.removeAllVariableLabelsFromAllPersons( tx);
 				if( newCity) {
 					Utils.logging( "reorganize labels :Person");
 					tx.run( Cypher.removeLabelPersonFromAllNodes());
@@ -126,15 +127,15 @@ public class Neo4j {
 	/** 
 	 * create missing db-constraints - neo4j creates an index for an constraint  
 	 */
-	public void setConstraint() {
-		try(Session session = getDriver().session()) {
-			session.run( Cypher.createConstraint());			
-		} catch(ClientException e) { // neo4j driver does not raise the exception until the session is closed! 
-			Utils.logging( "Constraint :Person(id) already exists");
-			return;
-		}
-		Utils.logging( "Constraint :Person(id) created");
-	}
+//	public void setConstraint() {
+//		try(Session session = getDriver().session()) {
+//			session.run( Cypher.createConstraint());			
+//		} catch(ClientException e) { // neo4j driver does not raise the exception until the session is closed! 
+//			Utils.logging( "Constraint :Person(id) already exists");
+//			return;
+//		}
+//		Utils.logging( "Constraint :Person(id) created");
+//	}
 
 	/** 
 	 * create missing db-indices for the person node 

@@ -16,7 +16,7 @@ public final class Constants {
 		Person
 	}
 
-	/** variable node-labels */
+	/** variable node-labels for stati of :Person */
 	public static enum labelNameVar {
 		Healthy, InIncubation, Ill, Immune
 	}
