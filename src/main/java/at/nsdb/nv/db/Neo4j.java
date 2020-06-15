@@ -605,13 +605,13 @@ public class Neo4j {
 				
 				Utils.logging( "DBConsistency: " +  
 					" numbPersons=" + numbPersons +
-					" numbPersonsWithActiveCity=" + getCount( Cypher.numbPersonsWithActiveCity(), tx) +
-					" numbNodesWithActiveCity=" +  getCount( Cypher.numbNodesWithActiveCity(), tx) +
+					" numbPersonsWithActiveCity=" + getCount( Cypher.numbPersonsWithFilter(), tx) +
+					" numbNodesWithActiveCity=" +  getCount( Cypher.numbNodesWithFilter(), tx) +
 					" numbPersonsWithCanInfects=" + getNumbPersonsWithCanInfects());
 						
 				if( numbPersons == 0) neo4jPreparedForActiveCity = false;
-				else if( numbPersons != getCount( Cypher.numbPersonsWithActiveCity(), tx)) neo4jPreparedForActiveCity = false;
-				else if( numbPersons != getCount( Cypher.numbNodesWithActiveCity(), tx)) neo4jPreparedForActiveCity = false;
+				else if( numbPersons != getCount( Cypher.numbPersonsWithFilter(), tx)) neo4jPreparedForActiveCity = false;
+				else if( numbPersons != getCount( Cypher.numbNodesWithFilter(), tx)) neo4jPreparedForActiveCity = false;
 				else if( numbPersons != getNumbPersonsWithCanInfects()) neo4jPreparedForActiveCity = false;
 				return 1;
 			});
@@ -627,15 +627,10 @@ public class Neo4j {
 	 * print the longest infection-path
 	 */
 	public void printLongestInfectionPath() {
-		String cypherQ = 
-			"MATCH (p:"+Constants.labelName.Person+") " +
-			"WITH max(p.dayOfInfection) as lastDayOfInfection " +
-			"MATCH path = ()-[:HasInfected*]->(endNode:Person) " +
-			"WHERE endNode.dayOfInfection = lastDayOfInfection " +
-			"RETURN path";
+		
 		try( Session session = driver.session()) {	
 			session.readTransaction(tx -> {
-				Result result = tx.run( cypherQ);
+				Result result = tx.run( Cypher.getLongestInfectionPath());
 				Value value = null;
 				while( result.hasNext()) {
 					Record record = result.next();
