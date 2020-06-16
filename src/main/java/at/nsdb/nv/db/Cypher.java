@@ -342,10 +342,12 @@ public class Cypher {
 
 	/** get longest infection path */
 	public static String getLongestInfectionPath() {
-		return "MATCH (p:" + Person + ") " + 
-				"WITH max(p." + dayOfInfection + ") as lastDayOfInfection " +
-				"MATCH path = ()-[:" + HasInfected + "*]->(endNode:" + Person + ") " +
-				"WHERE endNode."+dayOfInfection+" = lastDayOfInfection " +
+		return "MATCH (p:" + Person + ") " +
+		        "WHERE p."+dayOfInfection+ " > 0 " + 
+				"WITH min(p."+dayOfInfection+") as firstDay, max(p."+dayOfInfection+") as lastDay " +
+				"MATCH path = (startNode:"+Person+")-[:"+ HasInfected+"*]->(endNode:"+Person+") " +
+				"WHERE startNode."+dayOfInfection+" = firstDay " +
+				  "AND endNode."+dayOfInfection+" = lastDay " +
 				"RETURN path";
 	}
 }
