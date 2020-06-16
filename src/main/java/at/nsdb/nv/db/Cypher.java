@@ -181,6 +181,13 @@ public class Cypher {
 			"MATCH (p:"+Person+")-[c:"+CanInfect+"]->(q:"+Person+") " +
 			"RETURN p, c, q";
 	}
+
+	/** get all :HasInfected-relations */
+	public static String getAllHasInfectedFromAllPersons() {
+		return
+			"MATCH (p:"+Person+")-[c:"+HasInfected+"]->(q:"+Person+") " +
+			"RETURN p, c, q";
+	}
 	
 	/** get id2 and distance from all persons who can be infected */
 	public static String infectPersons() {		
@@ -195,10 +202,8 @@ public class Cypher {
 		"WHERE (r2 < $quote) AND (r1 < $accept) " +
 			"AND ((r < 0.002) OR (r < exp( -0.1 * dist / 1000))) " +
 		"set q."+dayOfInfection+" = $day " +
-		"CREATE (p)-[:" + HasInfected + 
-			" {" + day + ":$day}]->(q)";
+		"CREATE (p)-[:"+HasInfected+ " {" +day+":$day}]->(q)";
 		
-
 		return cypherQ;
 	}
 	

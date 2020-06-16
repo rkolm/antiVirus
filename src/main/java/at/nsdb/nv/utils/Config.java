@@ -158,7 +158,14 @@ public final class Config {
      * @return CSV-file-name for export of :CanInfect-relations
      */
     public static String getCanInfectFileName() {        
-        return getInstance().props.getProperty("run.export.canInfectFile", "canInfect.csv");
+        return getInstance().props.getProperty("run.export.canInfectFile", "");
+    }
+
+    /**
+     * @return CSV-file-name for export of :HasInfected-relations
+     */
+    public static String getHasInfectedFileName() {        
+        return getInstance().props.getProperty("run.export.hasInfectedFile", "");
     }
     
     

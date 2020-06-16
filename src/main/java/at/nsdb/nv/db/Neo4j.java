@@ -24,6 +24,7 @@ import org.neo4j.driver.exceptions.ClientException;
 import static org.neo4j.driver.Values.parameters;
 
 import at.nsdb.nv.model.CanInfect;
+import at.nsdb.nv.model.HasInfected;
 import at.nsdb.nv.model.Person;
 import at.nsdb.nv.model.Persons;
 import at.nsdb.nv.utils.Config;
@@ -372,6 +373,29 @@ public class Neo4j {
 	}
 
 	/**
+	 * export :HasInfected-Relationsto csv
+	 */
+	public void exportHasInfected() {
+		String hasInfectedFileName = Config.getHasInfectedFileName();
+		if (!hasInfectedFileName.isEmpty()) {
+			Utils.logging( "exporting :HasInfected-relations to " + hasInfectedFileName);
+			try {   
+				// Open given file in append mode. 
+				BufferedWriter out = new BufferedWriter( new FileWriter(hasInfectedFileName)); 
+				out.write( HasInfected.toExportFileHeader()); out.newLine();
+				for( HasInfected m : getAllHasInfected()) {
+					out.write( m.toExportFile()); out.newLine();
+				}
+				out.close(); 
+			} 
+			catch (IOException e) { 
+				System.out.println(" Error exporting :HasInfected-relations to " + hasInfectedFileName + " " + e); 
+			} 
+			Utils.logging( "exporting :HasInfected-relations finished");	
+		}
+	}
+
+	/**
 	 * set variable node labels to healthy, inIncubation, ill, immune<p/>
 	 * depending on status of :Person<p/>
 	 * for a given day
@@ -541,8 +565,7 @@ public class Neo4j {
 				return getAllCanInfectsFromAllPersons( tx);
 			});
 		}
-	}
-	
+	}	
 	/** get CanInfect from Result to Vector */
 	public Vector<CanInfect> getCanInfectsFromResult( Result result) {
 		Vector<CanInfect> canInfects = new Vector<CanInfect>();
@@ -555,6 +578,42 @@ public class Neo4j {
 			canInfects.add(new CanInfect(id1, id2, distance));
 		}
 		return canInfects;
+	}
+
+		/*-----------------------------------------------------------------------------
+	/*
+	/* get different sets of hasInfected
+	/* 
+	/*-----------------------------------------------------------------------------
+	 */
+	/** get all :HasInfected-relations */
+	public Vector<HasInfected> getAllHasInfectedFromAllPersons( Transaction tx) {
+		var hasInfectedVector = new Vector<HasInfected>();
+		String cypherQ = Cypher.getAllHasInfectedFromAllPersons();
+		Result result = tx.run( cypherQ);
+		hasInfectedVector = getHasInfectedFromResult( result);
+		return hasInfectedVector;
+	}
+	/** read all :HasInfected-relations */
+	Vector<HasInfected> getAllHasInfected() {
+		try( Session session = driver.session()) {
+			return session.readTransaction( tx -> {
+				return getAllHasInfectedFromAllPersons( tx);
+			});
+		}
+	}	
+	/** get HasInfected from Result to Vector */
+	public Vector<HasInfected> getHasInfectedFromResult( Result result) {
+		var hasInfectedVector = new Vector<HasInfected>();
+		while( result.hasNext()) {
+			Record record = result.next();
+			long id1 = record.get("p").asNode().id();
+			long id2 = record.get("q").asNode().id();
+			Relationship c = record.get("c").asRelationship();
+			int day = c.get( Constants.relAttribute.day.toString()).asInt();
+			hasInfectedVector.add(new HasInfected(id1, id2, day));
+		}
+		return hasInfectedVector;
 	}
 	
 	
