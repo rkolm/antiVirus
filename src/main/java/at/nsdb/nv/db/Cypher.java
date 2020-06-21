@@ -347,8 +347,10 @@ public class Cypher {
 				"WITH min(p."+dayOfInfection+") as firstDay, max(p."+dayOfInfection+") as lastDay " +
 				"MATCH path = (startNode:"+Person+")-[:"+ HasInfected+"*]->(endNode:"+Person+") " +
 				"WHERE startNode."+dayOfInfection+" = firstDay " +
-				  "AND endNode."+dayOfInfection+" = lastDay " +
-				"RETURN path";
+				  "AND endNode."+dayOfInfection+" = lastDay " +				  
+				"RETURN path " +
+				"ORDER BY LENGTH(path) " +
+				"LIMIT 1";
 	}
 }
 	
